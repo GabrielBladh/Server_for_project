@@ -1,8 +1,9 @@
-
-
 public class Main
 {
-    public static void main(String[] args){
-        Controller controller = new Controller();
+    public static void main(String[] args)
+    {
+        System.out.println("hello värld");
+
+        System.out.println("JAG skriva");
     }
 }
