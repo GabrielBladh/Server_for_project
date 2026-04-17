@@ -16,6 +16,10 @@ public class Checkers implements Game {
         }
     }
 
+    public String getTurn(){
+        return currentPlayer;
+    }
+
     public boolean placeTile(int row, int col) {
         if (board[row][col].equals("B")) {
             if (row + 1 > 8) {

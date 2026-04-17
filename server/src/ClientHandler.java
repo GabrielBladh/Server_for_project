@@ -46,11 +46,26 @@ public class ClientHandler implements Runnable {
                 out.flush();
                 socket.close();
             }
+            else if (command.equals("update1")) {
+                String response = controller.getGame().getGameStatus();
+                System.out.println("Response1: " + response);
+                out.println(response);
+                System.out.println("Response2: 0000000000");
+                out.println("000000000");
+                out.flush();
+                socket.close();
+            }
+            else if (command.equals("turn")) {
+                String response = controller.getGame().getTurn();
+                out.println(response);
+                out.flush();
+                socket.close();
+            }
             else{
                 System.out.println("Response: " + command);
                 String[] commands = command.split(":");
                 controller.getGame().placeTile(Integer.parseInt(commands[0]), Integer.parseInt(commands[1]));
-                out.println(Color.BLUE);
+                out.println(commands[0] + ":" + commands[1]);
                 out.flush();
                 socket.close();
 

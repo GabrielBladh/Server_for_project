@@ -22,6 +22,10 @@ public class TicTacToe implements Game{
         return boardStatus;
     }
 
+    public String getTurn(){
+        return currentPlayer;
+    }
+
     @Override
     public boolean placeTile(int row, int col) {
         board[row][col] = currentPlayer;
