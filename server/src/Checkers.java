@@ -3,6 +3,10 @@ public class Checkers implements Game {
     String[][] board = new String[8][8];
     String currentPlayer = "B";
 
+    // nya variaböer för att kolla vilka rutor, pjäsar man klickar på
+    int selectedRow = -1;
+    int selectedCol = -1;
+
     public Checkers() {
         setupGame();
     }
