@@ -21,15 +21,22 @@ public class Checkers implements Game {
     }
 
     public boolean placeTile(int row, int col) {
-        if (board[row][col].equals("B")) {
-            if (row + 1 > 8) {
-                if (col + 1 > 8) {
+        // först ska man kolla om rutan är inte tom för att förhindra NullPointerException
+        if (board[row][col] !=null && board[row][col].equals("B")) {
+
+            // < istället för >, då ska man kolla upp till inder 7 (8 platser på brädet)
+            if (row + 1 < 8) {
+
+                //samma sak här
+                if (col + 1 < 8 && board[row+1][col-1] != null) {
+
                     board[row+1][col+1] = "G";
                 }
-                if (col - 1  >= 0) {
+                if (col - 1  >= 0 && board[row+1][col-1] != null) {
                     board[row + 1][col - 1] = "G";
                 }
             }
+            return true;
         }
         return false;
     }
