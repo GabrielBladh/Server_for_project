@@ -66,6 +66,9 @@ public class Checkers implements Game {
                 else if (board[row][col].equals("R")) {
                     boardStatus += "R";
                 }
+                else if (board[row][col].equals("G")) {
+                    boardStatus += "G";
+                }
             }
         }
         return boardStatus;
