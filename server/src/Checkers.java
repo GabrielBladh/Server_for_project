@@ -24,6 +24,16 @@ public class Checkers implements Game {
         return currentPlayer;
     }
 
+    @Override
+    public String getGameEnd() {
+        return "";
+    }
+
+    @Override
+    public boolean isGameEnded() {
+        return false;
+    }
+
     public boolean placeTile(int row, int col) {
         // först ska man kolla om rutan man väljer är inte tom för att förhindra NullPointerException och att den tillhär spelaren själv
         if (board[row][col] !=null && board[row][col].equals(currentPlayer)) {
