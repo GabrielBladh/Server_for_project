@@ -64,6 +64,7 @@ public class Checkers implements Game {
                 scoreTracker(currentPlayer);
                 System.out.println(redCounter);
                 System.out.println(blueCounter);
+                setWinner(currentPlayer);
 
             }
             clearValidMoves(); // Släck alla gröna lampor
@@ -170,9 +171,26 @@ public class Checkers implements Game {
         }
 
     }
-    private void setWinner(String winner){
+    private void setWinner(String winner) {
+        // 1. Töm hela brädet
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                board[r][c] = null;
+            }
+        }
 
-
+        // 2. Rita ut ett "W" med vinnarens färg
+        // Vänster och höger stapel
+        for (int r = 1; r <= 5; r++) {
+            board[r][1] = winner;
+            board[r][6] = winner;
+        }
+        // Botten och de inre diagonalerna av W:et
+        board[6][2] = winner;
+        board[5][3] = winner;
+        board[5][4] = winner;
+        board[6][5] = winner;
+        isGameEnded = true;
     }
 
     public String getGameStatus() {
