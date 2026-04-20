@@ -22,14 +22,19 @@ public class TicTacToe implements Game{
         return boardStatus;
     }
 
-    public String getTurn(){
+    public String getTurn()
+    {
         return currentPlayer;
     }
 
     @Override
     public boolean placeTile(int row, int col) {
-        board[row][col] = currentPlayer;
-        endTurn();
+        if (board[row][col] == null)
+        {
+            board[row][col] = currentPlayer;
+            endTurn();
+            return true;
+        }
         return true;
     }
 
