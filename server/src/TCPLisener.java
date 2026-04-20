@@ -11,7 +11,7 @@ public class TCPLisener implements Runnable {
 
     @Override
     public void run() {
-        int port = 900;
+        int port = 9400;
         ServerSocket serverSocket = null;
         try{
             serverSocket = new ServerSocket(port);
