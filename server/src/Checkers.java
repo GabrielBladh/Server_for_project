@@ -6,6 +6,9 @@ public class Checkers implements Game {
     // nya variaböer för att kolla vilka rutor, pjäsar man klickar på
     int selectedRow = -1;
     int selectedCol = -1;
+    int blueCounter = 12;
+    int redCounter = 12;
+    boolean isGameEnded = false;
 
     public Checkers() {
         setupGame();
@@ -25,6 +28,9 @@ public class Checkers implements Game {
     }
 
     public boolean placeTile(int row, int col) {
+        if (isGameEnded){
+            return false;
+        }
         // först ska man kolla om rutan man väljer är inte tom för att förhindra NullPointerException och att den tillhär spelaren själv
         if (board[row][col] !=null && board[row][col].equals(currentPlayer)) {
             //släcker andra lampor när man väljer på nytt
@@ -45,6 +51,10 @@ public class Checkers implements Game {
 
                 // Ta bort motståndarens pjäs från brädet!
                 board[capturedRow][capturedCol] = null;
+                scoreTracker(currentPlayer);
+                System.out.println(redCounter);
+                System.out.println(blueCounter);
+
             }
             clearValidMoves(); // Släck alla gröna lampor
             selectedRow = -1;  // Töm spelets "minne" (inget är valt längre)
@@ -106,7 +116,14 @@ public class Checkers implements Game {
         }
     }
 
-
+    private void scoreTracker (String currentPlayer){
+        if (currentPlayer.equals("B")){
+            blueCounter--;
+        }
+        else{
+            redCounter--;
+        }
+    }
 
     // metod för checkMoves för att se om hopp över motstånd är giltig
     /**
@@ -133,6 +150,20 @@ public class Checkers implements Game {
 
     }
 
+    private void endGame(){
+        if(redCounter == 0){
+        setWinner("B");
+        }
+        else if(blueCounter == 0) {
+            setWinner("R");
+            isGameEnded =true;
+        }
+
+    }
+    private void setWinner(String winner){
+
+
+    }
 
     public String getGameStatus() {
         String boardStatus = "";
