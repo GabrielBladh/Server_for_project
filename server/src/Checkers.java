@@ -29,20 +29,34 @@ public class Checkers implements Game {
         if (board[row][col] !=null && board[row][col].equals(currentPlayer)) {
             //släcker andra lampor när man väljer på nytt
             clearValidMoves();
-
-            // < istället för >, då ska man kolla upp till inder 7 (8 platser på brädet)
-            if (row + 1 < 8) {
-
-                //samma sak här
-                if (col + 1 < 8 && board[row+1][col-1] != null) {
-
-                    board[row+1][col+1] = "G";
-                }
-                if (col - 1  >= 0 && board[row+1][col-1] != null) {
-                    board[row + 1][col - 1] = "G";
-                }
-            }
+            selectedRow = row;
+            selectedCol = col;
+            checkMoves(row, col, currentPlayer);
             return true;
+        }
+        if (selectedRow != -1 && selectedCol != -1 && "G".equals(board[row][col])){
+            //flyttar pjäser till den nya rutan
+            board [row][col] = currentPlayer;
+            board[selectedRow][selectedCol] = null; //tömmer gamla ruta
+            if (Math.abs(row - selectedRow) == 2) {
+                // Räkna ut rutan vi hoppade över (mittenrutan)
+                int capturedRow = (row + selectedRow) / 2;
+                int capturedCol = (col + selectedCol) / 2;
+
+                // Ta bort motståndarens pjäs från brädet!
+                board[capturedRow][capturedCol] = null;
+            }
+            clearValidMoves(); // Släck alla gröna lampor
+            selectedRow = -1;  // Töm spelets "minne" (inget är valt längre)
+            selectedCol = -1;
+            endTurn();         // Byt tur till den andra spelaren
+            return true;
+        }
+
+        if (board[row][col] == null || board[row][col].equals("N")) {
+            clearValidMoves(); // Släcker lamporna
+            selectedRow = -1;  // tömmer minnet, spelaren får börja om och välja en ny pjäs
+            selectedCol = -1;
         }
         return false;
     }
@@ -73,6 +87,13 @@ public class Checkers implements Game {
     }
     //Metod för att rensa brädet från G (gröna lampor)
     private void clearValidMoves(){
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++ ){
+                if ("G".equals(board[r][c])){
+                    board[r][c] = null;
+                }
+            }
+        }
 
     }
 
