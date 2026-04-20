@@ -160,9 +160,32 @@ public class Checkers implements Game {
         }
 
     }
-    private void setWinner(String winner){
+    private void setWinner(String winner) {
+        // 1. Töm hela brädet
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                board[r][c] = null;
+            }
+        }
 
+        // 2. Rita ut ett "W" med vinnarens färg
+        // Vänster och höger stapel
+        for (int r = 1; r <= 6; r++) {
+            board[r][1] = winner;
+            board[r][6] = winner;
+        }
+        // Botten och de inre diagonalerna av W:et
+        board[6][2] = winner;
+        board[5][3] = winner;
+        board[5][4] = winner;
+        board[6][5] = winner;
 
+        // 3. Sätt den speciella markören på [0][0]
+        // Här använder jag "X", men du kan byta det till vad ditt system förväntar sig
+        board[0][0] = "X";
+
+        // 4. Markera att spelet är slut
+        isGameEnded = true;
     }
 
     public String getGameStatus() {
