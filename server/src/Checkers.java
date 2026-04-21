@@ -3,7 +3,6 @@ public class Checkers implements Game {
     String[][] board = new String[8][8];
     String currentPlayer = "B";
 
-    // Variabler för att hålla koll på vald pjäs och position
     int selectedRow = -1;
     int selectedCol = -1;
     String selectedPiece = "";
@@ -31,7 +30,17 @@ public class Checkers implements Game {
 
     @Override
     public String getGameEnd() {
-        return "";
+        StringBuilder blinkStatus = new StringBuilder();
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (board[r][c] != null) {
+                    blinkStatus.append("1");
+                } else {
+                    blinkStatus.append("0");
+                }
+            }
+        }
+        return blinkStatus.toString();
     }
 
     @Override
@@ -40,18 +49,16 @@ public class Checkers implements Game {
     }
 
     public boolean placeTile(int row, int col) {
-        if (isGameEnded){
+        // Spärr: Om spelet är slut, ignorera klick
+        if (isGameEnded) {
             return false;
         }
 
-        // 1. Kolla om vi klickar på en av våra egna pjäser (inklusive Damer)
         boolean isOwnPiece = false;
         if (board[row][col] != null) {
-            // Blå spelare får välja "B" (Blå) eller "M" (Mörkblå Dam)
             if (currentPlayer.equals("B") && (board[row][col].equals("B") || board[row][col].equals("M"))) {
                 isOwnPiece = true;
             }
-            // Röd spelare får välja "R" (Röd) eller "D" (Mörkröd Dam)
             else if (currentPlayer.equals("R") && (board[row][col].equals("R") || board[row][col].equals("D"))) {
                 isOwnPiece = true;
             }
@@ -61,23 +68,23 @@ public class Checkers implements Game {
             clearValidMoves();
             selectedRow = row;
             selectedCol = col;
-            selectedPiece = board[row][col]; // Spara EXAKT vilken pjäs vi valde
+            selectedPiece = board[row][col];
             checkMoves(row, col, selectedPiece);
             return true;
         }
 
-        // 2. Flytta vald pjäs till en grön ruta
+        // Flytta vald pjäs
         if (selectedRow != -1 && selectedCol != -1 && "G".equals(board[row][col])){
 
-            board[row][col] = selectedPiece; // Placera ut samma typ av pjäs (behåller Dam-status)
-            board[selectedRow][selectedCol] = null; // Töm gamla rutan
+            board[row][col] = selectedPiece;
+            board[selectedRow][selectedCol] = null;
 
             // Om det var ett hopp
             if (Math.abs(row - selectedRow) == 2) {
                 int capturedRow = (row + selectedRow) / 2;
                 int capturedCol = (col + selectedCol) / 2;
 
-                board[capturedRow][capturedCol] = null; // Ta bort fienden
+                board[capturedRow][capturedCol] = null;
                 scoreTracker(currentPlayer);
                 System.out.println("Röda kvar: " + redCounter);
                 System.out.println("Blå kvar: " + blueCounter);
@@ -85,7 +92,11 @@ public class Checkers implements Game {
                 endGame();
             }
 
-            // Kolla om pjäsen nådde andra sidan och ska bli en Dam
+            // Spärr 2: Om draget ovanför avslutade spelet, måste vi avbryta direkt!
+            if (isGameEnded) {
+                return true;
+            }
+
             checkPromotion(row, col);
 
             clearValidMoves();
@@ -96,7 +107,7 @@ public class Checkers implements Game {
             return true;
         }
 
-        // 3. Klick på tom ruta avbryter markeringen
+        // Klick på tom ruta
         if (board[row][col] == null || board[row][col].equals("N")) {
             clearValidMoves();
             selectedRow = -1;
@@ -106,21 +117,20 @@ public class Checkers implements Game {
         return false;
     }
 
-    // Metod för att göra en pjäs till Dam om den når sista raden
     private void checkPromotion(int row, int col) {
+        if (board[row][col] == null) return; // Säkerhetsspärr
+
         if (board[row][col].equals("B") && row == 7) {
-            board[row][col] = "M"; // M = Mörkblå Dam
+            board[row][col] = "M";
         } else if (board[row][col].equals("R") && row == 0) {
-            board[row][col] = "D"; // D = Mörkröd Dam (D för Dark Red / Dam)
+            board[row][col] = "D";
         }
     }
 
     public void checkMoves(int row, int col, String piece) {
-        // En Dam ('M' eller 'D') får gå åt båda hållen!
         boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
         boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
 
-        // FÖRENKLAD LOGIK: Bestäm vilka bokstäver som tillhör motståndaren med en vanlig if-sats
         String oppNormal;
         String oppKing;
 
@@ -166,7 +176,6 @@ public class Checkers implements Game {
     }
 
     private void scoreTracker(String currentPlayer){
-        // Den spelare som hoppar tvingar motståndaren att tappa en pjäs
         if (currentPlayer.equals("B")){
             redCounter--;
         }
@@ -175,7 +184,6 @@ public class Checkers implements Game {
         }
     }
 
-    // Uppdaterad för att kunna hoppa över både vanliga pjäser och Damer
     private void markCaptureIfValid(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
         if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
             String middleSquare = board[midRow][midCol];
@@ -201,6 +209,7 @@ public class Checkers implements Game {
                 board[r][c] = null;
             }
         }
+        // Rita W
         for (int r = 1; r <= 5; r++) {
             board[r][1] = winner;
             board[r][6] = winner;
@@ -210,38 +219,27 @@ public class Checkers implements Game {
         board[5][4] = winner;
         board[6][5] = winner;
 
-        board[0][0] = "X"; // Din specialsignal för vinst-blink
+        // Din hårdvaru-signal för att spelet är slut på index 0,0
+        board[0][0] = "W";
+
         isGameEnded = true;
     }
 
     public String getGameStatus() {
-        String boardStatus = "";
+        StringBuilder boardStatus = new StringBuilder();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (board[row][col] == null) {
-                    boardStatus += "N";
-                }
-                else if (board[row][col].equals("B")) {
-                    boardStatus +="B";
-                }
-                else if (board[row][col].equals("M")) { // Mörkblå Dam
-                    boardStatus +="M";
-                }
-                else if (board[row][col].equals("R")) {
-                    boardStatus += "R";
-                }
-                else if (board[row][col].equals("D")) { // Mörkröd Dam
-                    boardStatus +="D";
-                }
-                else if (board[row][col].equals("G")) {
-                    boardStatus += "G";
-                }
-                else if (board[row][col].equals("X")) { // För vinstskärmen
-                    boardStatus += "X";
+                    boardStatus.append("N");
+                } else {
+                    // Denna rad löser kraschen! Den tvingar Java att alltid lägga till
+                    // bokstaven, även om det är den speciella "W"-bokstaven.
+                    // Hårdvaran får nu alltid exakt 64 tecken.
+                    boardStatus.append(board[row][col]);
                 }
             }
         }
-        return boardStatus;
+        return boardStatus.toString();
     }
 
     public void setupGame() {
