@@ -1,6 +1,7 @@
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
+    String[][] blinkBoard = new String[8][8];
     String currentPlayer = "B";
 
     int selectedRow = -1;
@@ -10,9 +11,16 @@ public class Checkers implements Game {
     int blueCounter = 12;
     int redCounter = 12;
     boolean isGameEnded = false;
+    boolean multiJumpActive = false;
 
     public Checkers() {
         setupGame();
+        // Fyller blinkBoard med bara nollor
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                blinkBoard[r][c] = "0";
+            }
+        }
     }
 
     public void endTurn(){
@@ -22,6 +30,13 @@ public class Checkers implements Game {
         else {
             currentPlayer = "B";
         }
+        if (!hasValidMoves(currentPlayer)){
+            if (currentPlayer.equals("B")){
+                setWinner("R");
+            } else {
+                setWinner("B");
+            }
+        }
     }
 
     public String getTurn(){
@@ -30,17 +45,13 @@ public class Checkers implements Game {
 
     @Override
     public String getGameEnd() {
-        StringBuilder blinkStatus = new StringBuilder();
+        StringBuilder statusEnd = new StringBuilder();
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
-                if (board[r][c] != null) {
-                    blinkStatus.append("1");
-                } else {
-                    blinkStatus.append("0");
-                }
+                statusEnd.append(blinkBoard[r][c]);
             }
         }
-        return blinkStatus.toString();
+        return statusEnd.toString();
     }
 
     @Override
@@ -49,13 +60,12 @@ public class Checkers implements Game {
     }
 
     public boolean placeTile(int row, int col) {
-        // Spärr: Om spelet är slut, ignorera klick
         if (isGameEnded) {
             return false;
         }
 
         boolean isOwnPiece = false;
-        if (board[row][col] != null) {
+        if (board[row][col] != null && !multiJumpActive) {
             if (currentPlayer.equals("B") && (board[row][col].equals("B") || board[row][col].equals("M"))) {
                 isOwnPiece = true;
             }
@@ -69,17 +79,17 @@ public class Checkers implements Game {
             selectedRow = row;
             selectedCol = col;
             selectedPiece = board[row][col];
-            checkMoves(row, col, selectedPiece);
+            boolean mustJump = doesPlayerHaveAnyJump (currentPlayer);
+            checkMoves(row, col, selectedPiece, mustJump);
             return true;
         }
 
-        // Flytta vald pjäs
         if (selectedRow != -1 && selectedCol != -1 && "G".equals(board[row][col])){
 
             board[row][col] = selectedPiece;
             board[selectedRow][selectedCol] = null;
+            boolean justJumped = false;
 
-            // Om det var ett hopp
             if (Math.abs(row - selectedRow) == 2) {
                 int capturedRow = (row + selectedRow) / 2;
                 int capturedCol = (col + selectedCol) / 2;
@@ -88,17 +98,34 @@ public class Checkers implements Game {
                 scoreTracker(currentPlayer);
                 System.out.println("Röda kvar: " + redCounter);
                 System.out.println("Blå kvar: " + blueCounter);
-
-                endGame();
+                justJumped = true;
+                checkWinByCounters();
             }
 
-            // Spärr 2: Om draget ovanför avslutade spelet, måste vi avbryta direkt!
             if (isGameEnded) {
                 return true;
             }
 
-            checkPromotion(row, col);
+            boolean promotedToKing =  checkPromotion(row, col);
 
+            if (justJumped && !promotedToKing){
+                clearValidMoves();
+                checkMoves(row, col, selectedPiece, true);
+                boolean canJumpAgain = false;
+                for (int r = 0; r < 8; r++){
+                    for (int c = 0; c < 8; c++){
+                        if ("G".equals( board[r][c])) canJumpAgain = true;
+                    }
+                }
+                if (canJumpAgain){
+                    multiJumpActive = true;
+                    selectedRow = row;
+                    selectedCol = col;
+                    return true;
+                }
+            }
+
+            multiJumpActive = false;
             clearValidMoves();
             selectedRow = -1;
             selectedCol = -1;
@@ -107,27 +134,31 @@ public class Checkers implements Game {
             return true;
         }
 
-        // Klick på tom ruta
         if (board[row][col] == null || board[row][col].equals("N")) {
-            clearValidMoves();
-            selectedRow = -1;
-            selectedCol = -1;
-            selectedPiece = "";
+            if( !multiJumpActive){
+                clearValidMoves();
+                selectedRow = -1;
+                selectedCol = -1;
+                selectedPiece = "";
+            }
         }
         return false;
     }
 
-    private void checkPromotion(int row, int col) {
-        if (board[row][col] == null) return; // Säkerhetsspärr
+    private boolean checkPromotion(int row, int col) {
+        if (board[row][col] == null) return false;
 
         if (board[row][col].equals("B") && row == 7) {
             board[row][col] = "M";
+            return true;
         } else if (board[row][col].equals("R") && row == 0) {
             board[row][col] = "D";
+            return true;
         }
+        return false;
     }
 
-    public void checkMoves(int row, int col, String piece) {
+    public void checkMoves(int row, int col, String piece, boolean onlyJumps) {
         boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
         boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
 
@@ -143,18 +174,99 @@ public class Checkers implements Game {
         }
 
         if (canMoveDown) {
-            markIfValid(row + 1, col - 1);
-            markIfValid(row + 1, col + 1);
+            if (!onlyJumps){
+                markIfValid(row + 1, col - 1);
+                markIfValid(row + 1, col + 1);
+            }
             markCaptureIfValid(row + 1, col - 1, row + 2, col - 2, oppNormal, oppKing);
             markCaptureIfValid(row + 1, col + 1, row + 2, col + 2, oppNormal, oppKing);
         }
 
         if (canMoveUp) {
-            markIfValid(row - 1, col - 1);
-            markIfValid(row - 1, col + 1);
+            if (!onlyJumps){
+                markIfValid(row - 1, col - 1);
+                markIfValid(row - 1, col + 1);
+            }
             markCaptureIfValid(row - 1, col - 1, row - 2, col - 2, oppNormal, oppKing);
             markCaptureIfValid(row - 1, col + 1, row - 2, col + 2, oppNormal, oppKing);
         }
+    }
+
+    private boolean doesPlayerHaveAnyJump(String player){
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                String piece = board [r][c];
+                if( piece != null){
+                    boolean isOwnPiece = false;
+                    if (player.equals("B") && (piece.equals("B") || piece.equals("M"))) isOwnPiece = true;
+                    if (player.equals("R") && (piece.equals("R") || piece.equals("D"))) isOwnPiece = true;
+
+                    if (isOwnPiece && canJump (r, c, piece)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean canJump( int row, int col, String piece){
+        boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
+        boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
+
+        String oppNormal = (piece.equals("B") || piece.equals("M")) ? "R" : "B";
+        String oppKing = (piece.equals("B") || piece.equals("M")) ? "D" : "M";
+        if (canMoveDown) {
+            markCaptureIfValid(row + 1, col - 1, row + 2, col - 2, oppNormal, oppKing);
+            markCaptureIfValid(row + 1, col + 1, row + 2, col + 2, oppNormal, oppKing);
+        }
+
+        if (canMoveUp) {
+            markCaptureIfValid(row - 1, col - 1, row - 2, col - 2, oppNormal, oppKing);
+            markCaptureIfValid(row - 1, col + 1, row - 2, col + 2, oppNormal, oppKing);
+        }
+        return false;
+    }
+
+    private boolean isValidCapture(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
+        if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
+            String middleSquare = board[midRow][midCol];
+            if ( middleSquare != null && (middleSquare.equals(oppNormal) ||
+                    middleSquare.equals(oppKing)) && board [endRow][endCol] == null){
+                return true;
+            }
+
+        }
+        return false;
+    }
+
+    private boolean hasValidMoves(String player){
+        boolean hasMove = false;
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                String piece = board[r][c];
+                if (piece != null){
+                    boolean isOwnPiece = false;
+                    if (player.equals("B") && (piece.equals("B") || piece.equals("M"))) isOwnPiece = true;
+                    if (player.equals("R") && (piece.equals("R") || piece.equals("D") )) isOwnPiece = true;
+                    if (isOwnPiece){
+                        checkMoves(r, c, piece, false);
+                    }
+                }
+
+            }
+        }
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                if ("G".equals(board[r][c])){
+                    hasMove = true;
+                    break;
+                }
+            }
+        }
+        clearValidMoves();
+        return hasMove;
+
     }
 
     private void clearValidMoves(){
@@ -194,7 +306,9 @@ public class Checkers implements Game {
         }
     }
 
-    private void endGame(){
+
+
+    private void checkWinByCounters(){
         if(redCounter == 0){
             setWinner("B");
         }
@@ -204,24 +318,15 @@ public class Checkers implements Game {
     }
 
     private void setWinner(String winner) {
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                board[r][c] = null;
-            }
-        }
-        // Rita W
+        // FIX: Här använder vi blinkBoard så att vi inte ritar över det vanliga spelet
         for (int r = 1; r <= 5; r++) {
-            board[r][1] = winner;
-            board[r][6] = winner;
+            blinkBoard[r][1] = "1";
+            blinkBoard[r][6] = "1";
         }
-        board[6][2] = winner;
-        board[5][3] = winner;
-        board[5][4] = winner;
-        board[6][5] = winner;
-
-        // Din hårdvaru-signal för att spelet är slut på index 0,0
-        board[0][0] = "W";
-
+        blinkBoard[6][2] = "1";
+        blinkBoard[5][3] = "1";
+        blinkBoard[5][4] = "1";
+        blinkBoard[6][5] = "1";
         isGameEnded = true;
     }
 
@@ -232,9 +337,6 @@ public class Checkers implements Game {
                 if (board[row][col] == null) {
                     boardStatus.append("N");
                 } else {
-                    // Denna rad löser kraschen! Den tvingar Java att alltid lägga till
-                    // bokstaven, även om det är den speciella "W"-bokstaven.
-                    // Hårdvaran får nu alltid exakt 64 tecken.
                     boardStatus.append(board[row][col]);
                 }
             }
