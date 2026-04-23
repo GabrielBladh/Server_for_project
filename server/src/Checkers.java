@@ -211,7 +211,6 @@ public class Checkers implements Game {
         return false;
     }
 
-    // DENNA METOD ÄR LÖSNINGEN: Här returneras nu true via isValidCapture
     private boolean canJump(int row, int col, String piece){
         boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
         boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
@@ -231,7 +230,6 @@ public class Checkers implements Game {
         return false;
     }
 
-    // Tittar i smyg utan att rita några "G" på brädet!
     private boolean isValidCapture(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
         if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
             String middleSquare = board[midRow][midCol];
