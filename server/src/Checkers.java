@@ -1,17 +1,25 @@
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
+    String[][] blinkBoard = new String[8][8];
     String currentPlayer = "B";
 
-    // nya variaböer för att kolla vilka rutor, pjäsar man klickar på
     int selectedRow = -1;
     int selectedCol = -1;
+    String selectedPiece = "";
+
     int blueCounter = 12;
     int redCounter = 12;
     boolean isGameEnded = false;
+    boolean multiJumpActive = false;
 
     public Checkers() {
         setupGame();
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                blinkBoard[r][c] = "0";
+            }
+        }
     }
 
     public void endTurn(){
@@ -21,6 +29,13 @@ public class Checkers implements Game {
         else {
             currentPlayer = "B";
         }
+        if (!hasValidMoves(currentPlayer)){
+            if (currentPlayer.equals("B")){
+                setWinner("R");
+            } else {
+                setWinner("B");
+            }
+        }
     }
 
     public String getTurn(){
@@ -29,83 +44,230 @@ public class Checkers implements Game {
 
     @Override
     public String getGameEnd() {
-        return "";
+        StringBuilder statusEnd = new StringBuilder();
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                statusEnd.append(blinkBoard[r][c]);
+            }
+        }
+        return statusEnd.toString();
     }
 
     @Override
     public boolean isGameEnded() {
-        return false;
+        return isGameEnded;
     }
 
     public boolean placeTile(int row, int col) {
-        if (isGameEnded){
+        if (isGameEnded) {
             return false;
         }
-        // först ska man kolla om rutan man väljer är inte tom för att förhindra NullPointerException och att den tillhär spelaren själv
-        if (board[row][col] !=null && board[row][col].equals(currentPlayer)) {
-            //släcker andra lampor när man väljer på nytt
+
+        boolean isOwnPiece = false;
+        if (board[row][col] != null && !multiJumpActive) {
+            if (currentPlayer.equals("B") && (board[row][col].equals("B") || board[row][col].equals("M"))) {
+                isOwnPiece = true;
+            }
+            else if (currentPlayer.equals("R") && (board[row][col].equals("R") || board[row][col].equals("D"))) {
+                isOwnPiece = true;
+            }
+        }
+
+        if (isOwnPiece) {
             clearValidMoves();
             selectedRow = row;
             selectedCol = col;
-            checkMoves(row, col, currentPlayer);
+            selectedPiece = board[row][col];
+
+            // Kollar om spelaren är tvingad att hoppa
+            boolean mustJump = doesPlayerHaveAnyJump(currentPlayer);
+            checkMoves(row, col, selectedPiece, mustJump);
             return true;
         }
+
         if (selectedRow != -1 && selectedCol != -1 && "G".equals(board[row][col])){
-            //flyttar pjäser till den nya rutan
-            board [row][col] = currentPlayer;
-            board[selectedRow][selectedCol] = null; //tömmer gamla ruta
+
+            board[row][col] = selectedPiece;
+            board[selectedRow][selectedCol] = null;
+            boolean justJumped = false;
+
             if (Math.abs(row - selectedRow) == 2) {
-                // Räkna ut rutan vi hoppade över (mittenrutan)
                 int capturedRow = (row + selectedRow) / 2;
                 int capturedCol = (col + selectedCol) / 2;
 
-                // Ta bort motståndarens pjäs från brädet!
                 board[capturedRow][capturedCol] = null;
                 scoreTracker(currentPlayer);
-                System.out.println(redCounter);
-                System.out.println(blueCounter);
-
+                System.out.println("Röda kvar: " + redCounter);
+                System.out.println("Blå kvar: " + blueCounter);
+                justJumped = true;
+                checkWinByCounters();
             }
-            clearValidMoves(); // Släck alla gröna lampor
-            selectedRow = -1;  // Töm spelets "minne" (inget är valt längre)
+
+            if (isGameEnded) {
+                return true;
+            }
+
+            boolean promotedToKing = checkPromotion(row, col);
+
+            if (justJumped && !promotedToKing){
+                clearValidMoves();
+                checkMoves(row, col, selectedPiece, true);
+                boolean canJumpAgain = false;
+                for (int r = 0; r < 8; r++){
+                    for (int c = 0; c < 8; c++){
+                        if ("G".equals( board[r][c])) canJumpAgain = true;
+                    }
+                }
+                if (canJumpAgain){
+                    multiJumpActive = true;
+                    selectedRow = row;
+                    selectedCol = col;
+                    return true;
+                }
+            }
+
+            multiJumpActive = false;
+            clearValidMoves();
+            selectedRow = -1;
             selectedCol = -1;
-            endTurn();         // Byt tur till den andra spelaren
+            selectedPiece = "";
+            endTurn();
             return true;
         }
 
         if (board[row][col] == null || board[row][col].equals("N")) {
-            clearValidMoves(); // Släcker lamporna
-            selectedRow = -1;  // tömmer minnet, spelaren får börja om och välja en ny pjäs
-            selectedCol = -1;
+            if(!multiJumpActive){
+                clearValidMoves();
+                selectedRow = -1;
+                selectedCol = -1;
+                selectedPiece = "";
+            }
         }
         return false;
     }
 
-    public void checkMoves(int row, int col, String player) {
-        if (player.equals("B")){
-            // B går neråt i brädet
-            markIfValid(row + 1, col - 1); // ner åt vänster
-            markIfValid(row + 1, col + 1); // ner åt höger
+    private boolean checkPromotion(int row, int col) {
+        if (board[row][col] == null) return false;
 
-            //kolla hoppa över motstånd, isf över R
-            markCaptureIfValid(row + 1, col - 1, row + 2, col - 2, "R"); // Hopp ner åt vänster
-            markCaptureIfValid(row + 1, col + 1, row + 2, col + 2, "R"); // Hopp ner åt höger
+        if (board[row][col].equals("B") && row == 7) {
+            board[row][col] = "M";
+            return true;
+        } else if (board[row][col].equals("R") && row == 0) {
+            board[row][col] = "D";
+            return true;
         }
-        else if (player.equals("R")){
-            // R är motstånd till B och går uppåt på brädet (raden minskar med 1)
-            markIfValid(row - 1, col - 1); // upp åt vänster
-            markIfValid(row - 1, col + 1); // upp åt höger
-
-            //kolla hopp över motstånd, isf B
-
-            markCaptureIfValid(row - 1, col - 1, row - 2, col - 2, "B"); // hopp upp åt vänster
-            markCaptureIfValid(row - 1, col + 1, row - 2, col + 2, "B"); // hopp upp åt höger
-
-
-        }
-
+        return false;
     }
-    //Metod för att rensa brädet från G (gröna lampor)
+
+    public void checkMoves(int row, int col, String piece, boolean onlyJumps) {
+        boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
+        boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
+
+        String oppNormal;
+        String oppKing;
+
+        if (piece.equals("B") || piece.equals("M")) {
+            oppNormal = "R";
+            oppKing = "D";
+        } else {
+            oppNormal = "B";
+            oppKing = "M";
+        }
+
+        if (canMoveDown) {
+            if (!onlyJumps){
+                markIfValid(row + 1, col - 1);
+                markIfValid(row + 1, col + 1);
+            }
+            markCaptureIfValid(row + 1, col - 1, row + 2, col - 2, oppNormal, oppKing);
+            markCaptureIfValid(row + 1, col + 1, row + 2, col + 2, oppNormal, oppKing);
+        }
+
+        if (canMoveUp) {
+            if (!onlyJumps){
+                markIfValid(row - 1, col - 1);
+                markIfValid(row - 1, col + 1);
+            }
+            markCaptureIfValid(row - 1, col - 1, row - 2, col - 2, oppNormal, oppKing);
+            markCaptureIfValid(row - 1, col + 1, row - 2, col + 2, oppNormal, oppKing);
+        }
+    }
+
+    private boolean doesPlayerHaveAnyJump(String player){
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                String piece = board[r][c];
+                if(piece != null){
+                    boolean isOwnPiece = false;
+                    if (player.equals("B") && (piece.equals("B") || piece.equals("M"))) isOwnPiece = true;
+                    if (player.equals("R") && (piece.equals("R") || piece.equals("D"))) isOwnPiece = true;
+
+                    if (isOwnPiece && canJump(r, c, piece)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean canJump(int row, int col, String piece){
+        boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
+        boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
+
+        String oppNormal = (piece.equals("B") || piece.equals("M")) ? "R" : "B";
+        String oppKing = (piece.equals("B") || piece.equals("M")) ? "D" : "M";
+
+        if (canMoveDown) {
+            if (isValidCapture(row + 1, col - 1, row + 2, col - 2, oppNormal, oppKing)) return true;
+            if (isValidCapture(row + 1, col + 1, row + 2, col + 2, oppNormal, oppKing)) return true;
+        }
+
+        if (canMoveUp) {
+            if (isValidCapture(row - 1, col - 1, row - 2, col - 2, oppNormal, oppKing)) return true;
+            if (isValidCapture(row - 1, col + 1, row - 2, col + 2, oppNormal, oppKing)) return true;
+        }
+        return false;
+    }
+
+    private boolean isValidCapture(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
+        if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
+            String middleSquare = board[midRow][midCol];
+            if (middleSquare != null && (middleSquare.equals(oppNormal) ||
+                    middleSquare.equals(oppKing)) && board[endRow][endCol] == null){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasValidMoves(String player){
+        boolean hasMove = false;
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                String piece = board[r][c];
+                if (piece != null){
+                    boolean isOwnPiece = false;
+                    if (player.equals("B") && (piece.equals("B") || piece.equals("M"))) isOwnPiece = true;
+                    if (player.equals("R") && (piece.equals("R") || piece.equals("D") )) isOwnPiece = true;
+                    if (isOwnPiece){
+                        checkMoves(r, c, piece, false);
+                    }
+                }
+            }
+        }
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                if ("G".equals(board[r][c])){
+                    hasMove = true;
+                    break;
+                }
+            }
+        }
+        clearValidMoves();
+        return hasMove;
+    }
+
     private void clearValidMoves(){
         for (int r = 0; r < 8; r++){
             for (int c = 0; c < 8; c++ ){
@@ -114,10 +276,8 @@ public class Checkers implements Game {
                 }
             }
         }
-
     }
 
-    // metod för att sätta G om rutan är ledig
     private void markIfValid(int r, int c) {
         if (r >= 0 && r < 8 && c >= 0 && c < 8) {
             if (board[r][c] == null) {
@@ -126,77 +286,58 @@ public class Checkers implements Game {
         }
     }
 
-    private void scoreTracker (String currentPlayer){
+    private void scoreTracker(String currentPlayer){
         if (currentPlayer.equals("B")){
-            blueCounter--;
-        }
-        else{
             redCounter--;
+        }
+        else {
+            blueCounter--;
         }
     }
 
-    // metod för checkMoves för att se om hopp över motstånd är giltig
-    /**
-    * Om rutan man hoppar över innehåller en motståndarpjäs, och landningsrutan
-     * är tom och inom brädets gränser, markeras landningsrutan som ett giltigt drag ("G").
-            *
-            * @param midRow   Raden för rutan som pjäsen hoppar över (där motståndaren förväntas stå).
-            * @param midCol   Kolumnen för rutan som pjäsen hoppar över.
-            * @param endRow   Raden för landningsrutan efter hoppet.
-            * @param endCol   Kolumnen för landningsrutan efter hoppet.
-            * @param opponent Sträng som representerar motståndarens pjäs (t.ex. "R" för Röd, "B" för Svart).
-            */
-    private void markCaptureIfValid(int midRow, int midCol, int endRow, int endCol, String opponent){
-        // kollar om rutan att hoppa över finns på brädet
+    private void markCaptureIfValid(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
         if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
-            //läser vad som står i mitten rutan (om det är motståndets pjäs)
-            String midleSquare = board [midRow][midCol];
-            //kollar om det är motstånd i mitten och rutan eften, endRow/endCol är tom
-            if(midleSquare != null && midleSquare.equals(opponent) && board[endRow][endCol]==null){
+            String middleSquare = board[midRow][midCol];
+
+            if(middleSquare != null && (middleSquare.equals(oppNormal) || middleSquare.equals(oppKing)) && board[endRow][endCol] == null){
                 board[endRow][endCol] = "G";
             }
         }
-
-
     }
 
-    private void endGame(){
+    private void checkWinByCounters(){
         if(redCounter == 0){
-        setWinner("B");
+            setWinner("B");
         }
         else if(blueCounter == 0) {
             setWinner("R");
-            isGameEnded =true;
         }
-
     }
-    private void setWinner(String winner){
 
-
+    private void setWinner(String winner) {
+        for (int r = 1; r <= 5; r++) {
+            blinkBoard[r][1] = "1";
+            blinkBoard[r][6] = "1";
+        }
+        blinkBoard[6][2] = "1";
+        blinkBoard[5][3] = "1";
+        blinkBoard[5][4] = "1";
+        blinkBoard[6][5] = "1";
+        isGameEnded = true;
     }
 
     public String getGameStatus() {
-        String boardStatus = "";
+        StringBuilder boardStatus = new StringBuilder();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (board[row][col] == null) {
-                    boardStatus += "N";
-                }
-                else if (board[row][col].equals("B")) {
-                    boardStatus +="B";
-                }
-                else if  (board[row][col].equals("W")) {
-                    boardStatus += "W";
-                }
-                else if (board[row][col].equals("R")) {
-                    boardStatus += "R";
-                }
-                else if (board[row][col].equals("G")) {
-                    boardStatus += "G";
+                    boardStatus.append("N");
+                } else {
+                    boardStatus.append(board[row][col]);
                 }
             }
         }
-        return boardStatus;
+        return boardStatus.toString();
     }
 
     public void setupGame() {
@@ -225,8 +366,4 @@ public class Checkers implements Game {
         board[5][4] = "R";
         board[5][6] = "R";
     }
-
-
-
-
 }
