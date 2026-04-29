@@ -1,3 +1,5 @@
+import Game.Game;
+
 public class Controller {
 
     Game game;

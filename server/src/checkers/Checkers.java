@@ -1,3 +1,7 @@
+package checkers;
+import Game.Game;
+
+
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
@@ -20,6 +24,10 @@ public class Checkers implements Game {
                 blinkBoard[r][c] = "0";
             }
         }
+    }
+
+    public String getBoardStatus(){
+        return "";
     }
 
     public void endTurn(){
