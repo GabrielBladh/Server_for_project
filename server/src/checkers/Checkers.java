@@ -26,6 +26,10 @@ public class Checkers implements Game {
         }
     }
 
+    public String getBoardStatus(){
+        return "";
+    }
+
     public void endTurn(){
         if (currentPlayer.equals("B")) {
             currentPlayer = "R";

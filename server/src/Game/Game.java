@@ -7,4 +7,5 @@ public interface Game {
     String getTurn();
     String getGameEnd();
     boolean isGameEnded();
+    String getBoardStatus();
 }

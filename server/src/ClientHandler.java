@@ -43,12 +43,21 @@ public class ClientHandler implements Runnable {
                 String response = controller.getGame().getGameStatus();
                 System.out.println("Response: " + response);
                 out.println(response);
-                if (controller.getGame().isGameEnded())
-                {
-                    String response2 = controller.getGame().getGameEnd();
-                    System.out.println("Response2: " + response2);
-                    out.println(response2);
-                }
+                out.flush();
+                socket.close();
+            }
+            else if (command.equals("update_blink")) {
+                String response = controller.getGame().getGameEnd();
+                System.out.println("Response: " + response);
+                out.println(response);
+                out.flush();
+                socket.close();
+            }
+
+            else if (command.equals("update_chess")){
+                String response = controller.getGame().getBoardStatus();
+                System.out.println("Response: " + response);
+                out.println(response);
                 out.flush();
                 socket.close();
             }
