@@ -11,6 +11,7 @@ public class Checkers implements Game {
     int selectedRow = -1;
     int selectedCol = -1;
     String selectedPiece = "";
+    public boolean isPlayingAgainstAI = false;
 
     int blueCounter = 12;
     int redCounter = 12;
