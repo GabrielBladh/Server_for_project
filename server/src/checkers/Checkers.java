@@ -50,8 +50,11 @@ public class Checkers implements Game {
                 setWinner("B");
             }
         }
-    }
 
+        if (AIgame && currentPlayer.equals("R") && !isGameEnded) {
+            CheckersAI.doComputerMove(this);
+        }
+    }
     public String getTurn(){
         return currentPlayer;
     }
@@ -136,6 +139,9 @@ public class Checkers implements Game {
                     multiJumpActive = true;
                     selectedRow = row;
                     selectedCol = col;
+                    if (AIgame && currentPlayer.equals("R")) {
+                        CheckersAI.doComputerMove(this);
+                    }
                     return true;
                 }
             }

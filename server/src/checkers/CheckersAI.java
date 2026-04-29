@@ -1,4 +1,5 @@
 package checkers;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -8,7 +9,7 @@ public class CheckersAI {
     private static class Move {
         int startRow, startCol;
         int endRow, endCol;
-        boolean isJump; // Är detta ett drag där vi äter en pjäs?
+        boolean isJump;
 
         Move(int sr, int sc, int er, int ec, boolean jump) {
             startRow = sr; startCol = sc; endRow = er; endCol = ec; isJump = jump;
@@ -16,28 +17,38 @@ public class CheckersAI {
     }
 
     public static void doComputerMove(Checkers game) {
+        // 1. Om AI:n precis gjorde ett drag som kräver ett multijump
+        if (game.multiJumpActive) {
+            for (int r = 0; r < 8; r++) {
+                for (int c = 0; c < 8; c++) {
+                    if ("G".equals(game.board[r][c])) {
+                        System.out.println("AI gör ett extra hopp till: " + r + ":" + c);
+                        game.placeTile(r, c); // Utför andra halvan av hoppet direkt
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 2. Normal tur - hitta alla möjliga drag
         String[][] tempBoard = game.board;
         List<Move> possibleMoves = new ArrayList<>();
 
-        // 1. Leta igenom brädet efter datorns pjäser ("R" eller "D")
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 String piece = tempBoard[r][c];
                 if (piece != null && (piece.equals("R") || piece.equals("D"))) {
 
-                    // 2. Vi anropar "checkMoves" för att låta spelet rita ut "G" på brädet
-                    // (Observera att vi måste rensa dessa "G" senare om vi inte väljer draget)
-                    boolean mustJump = doesPlayerHaveAnyJump(tempBoard, "R");
-                    game.checkMoves(r, c, piece, mustJump);
+                    // Kalla på spelets egen logik för att simulera drag ("G" på brädet)
+                    game.checkMoves(r, c, piece, false);
 
-                    // 3. Hitta alla "G" som ritades ut
+                    // Skanna av brädet för att hitta de "G" som just ritades ut
                     for (int gr = 0; gr < 8; gr++) {
                         for (int gc = 0; gc < 8; gc++) {
                             if ("G".equals(tempBoard[gr][gc])) {
-                                // Om avståndet är 2 är det ett hopp!
                                 boolean isJump = Math.abs(r - gr) == 2;
                                 possibleMoves.add(new Move(r, c, gr, gc, isJump));
-                                tempBoard[gr][gc] = null; // Rensa omedelbart "G":et
+                                tempBoard[gr][gc] = null; // Städa undan "G" omedelbart
                             }
                         }
                     }
@@ -45,10 +56,9 @@ public class CheckersAI {
             }
         }
 
-        // Om vi inte hittar några drag är spelet förmodligen slut
-        if (possibleMoves.isEmpty()) return;
+        if (possibleMoves.isEmpty()) return; // Spelet är förmodligen slut
 
-        // 4. Välj det BÄSTA draget (Om vi kan hoppa, gör vi det!)
+        // 3. Välj det bästa draget (hopp har alltid förtur)
         Move chosenMove = null;
         for (Move move : possibleMoves) {
             if (move.isJump) {
@@ -63,17 +73,11 @@ public class CheckersAI {
             chosenMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
         }
 
-        // 5. UTFÖR DRAGET SOM EN MÄNNISKA (Två klick!)
+        // 4. Utför draget genom att simulera två snabba klick!
         System.out.println("AI väljer pjäs på: " + chosenMove.startRow + ":" + chosenMove.startCol);
-        game.placeTile(chosenMove.startRow, chosenMove.startCol); // Klick 1: Välj pjäs
+        game.placeTile(chosenMove.startRow, chosenMove.startCol);
 
         System.out.println("AI flyttar till: " + chosenMove.endRow + ":" + chosenMove.endCol);
-        game.placeTile(chosenMove.endRow, chosenMove.endCol);     // Klick 2: Flytta
-    }
-
-    private static boolean doesPlayerHaveAnyJump(String[][] board, String player) {
-        // För enkelhetens skull i AI:n säger vi bara false här om vi bygger en basic bot,
-        // men du kan kopiera in er egen doesPlayerHaveAnyJump-logik hit om ni vill ha strikta regler!
-        return false;
+        game.placeTile(chosenMove.endRow, chosenMove.endCol);
     }
 }

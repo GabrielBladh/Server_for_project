@@ -35,6 +35,16 @@ public class ClientHandler implements Runnable {
                 out.flush();
                 socket.close();
             }
+            else if (command.equals("Checkers AI")) {
+                Checkers aiGame = new Checkers();
+                aiGame.setAI(true);
+                controller.setGame(aiGame);
+                System.out.println("Response: Checkers AI started");
+                out.println("StartGame");
+                out.flush();
+                socket.close();
+            }
+
             else if (command.equals("Tic Tac Toe")) {
                 controller.setGame(new TicTacToe());
                 System.out.println("Response: Tic Tac Toe : started");
