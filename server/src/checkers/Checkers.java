@@ -16,6 +16,7 @@ public class Checkers implements Game {
     int redCounter = 12;
     boolean isGameEnded = false;
     boolean multiJumpActive = false;
+    boolean AIgame = false;
 
     public Checkers() {
         setupGame();
@@ -24,6 +25,10 @@ public class Checkers implements Game {
                 blinkBoard[r][c] = "0";
             }
         }
+    }
+
+    public void setAI(boolean AIgame) {
+        this.AIgame = AIgame;
     }
 
     public String getBoardStatus(){

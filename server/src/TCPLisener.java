@@ -17,7 +17,7 @@ public class TCPLisener implements Runnable {
 
     @Override
     public void run() {
-        int port = 9900;
+        int port = 9000;
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("TCPLisener is listening on port " + port);

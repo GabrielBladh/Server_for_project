@@ -35,6 +35,15 @@ public class ClientHandler implements Runnable {
                 out.flush();
                 socket.close();
             }
+            else if (command.equals("Checkers_AI")) {
+                Checkers game = new Checkers();
+                game.setAI(true);
+                controller.setGame(game);
+                System.out.println("Response: Checkers started");
+                out.println("StartGame");
+                out.flush();
+                socket.close();
+            }
             else if (command.equals("Tic Tac Toe")) {
                 controller.setGame(new TicTacToe());
                 System.out.println("Response: Tic Tac Toe : started");
@@ -73,9 +82,14 @@ public class ClientHandler implements Runnable {
             else{
                 System.out.println("Response: " + command);
                 String[] commands = command.split(":");
-                controller.getGame().placeTile(Integer.parseInt(commands[0]), Integer.parseInt(commands[1]));
-                out.println(commands[0] + ":" + commands[1]);
-                out.flush();
+                if (controller.getGame() == null) {
+
+                }
+                else{
+                    controller.getGame().placeTile(Integer.parseInt(commands[0]), Integer.parseInt(commands[1]));
+                    out.println(commands[0] + ":" + commands[1]);
+                    out.flush();
+                }
                 socket.close();
 
             }

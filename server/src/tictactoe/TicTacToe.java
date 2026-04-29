@@ -2,132 +2,131 @@ package tictactoe;
 
 import Game.Game;
 
-public class TicTacToe implements Game{
+public class TicTacToe implements Game {
 
     String[][] board = new String[3][3];
     String[][] boardBlink = new String[3][3];
     String currentPlayer = "B";
-    Boolean isGameEnded = false;
+    boolean isGameEnded = false;
+    int[][][] buttons = {
+            { {9,10,17,18}, {11,12,19,20}, {13,14,21,22} },
+            { {25,26,33,34}, {27,28,35,36},{29,30,37,38} },
+            { {41,42,49,50}, {43,44,51,52}, {45,46,53,54} }
+    };
 
-    public TicTacToe()
-    {
-        boardBlink = new String[][]{{"0", "0","0"},{"0", "0", "0"},{"0", "0", "0"}};
+    public TicTacToe() {
+        boardBlink = new String[][]{
+                {"0","0","0"},
+                {"0","0","0"},
+                {"0","0","0"}
+        };
     }
 
     @Override
     public String getGameStatus() {
-        String boardStatus = "";
-        for(int row = 0; row < 3; row++){
-            for(int col = 0; col < 3; col++){
-                if (board[row][col] == null) {
-                    boardStatus += "N";
-                }
-                else if (board[row][col].equals("B")) {
-                    boardStatus +="B";
-                }
-                else if (board[row][col].equals("R")) {
-                    boardStatus += "R";
+        char[] boardStatus = new char[64];
+
+        for (int i = 0; i < boardStatus.length; i++) {
+            boardStatus[i] = 'N';
+        }
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                if (board[row][col] != null) {
+                    for (int button : buttons[row][col]) {
+                        boardStatus[button] = board[row][col].charAt(0);
+                    }
                 }
             }
         }
-        return boardStatus;
-    }
-    public String getBoardStatus(){
-        return "";
+
+        return new String(boardStatus);
     }
 
-    public String getTurn()
-    {
+    public String getTurn() {
         return currentPlayer;
     }
 
+
     @Override
     public boolean placeTile(int row, int col) {
-        if (isGameEnded == false)
-        {
-            if (board[row][col] == null)
-            {
-                board[row][col] = currentPlayer;
-                endTurn();
-                return true;
-            }
+        if (isGameEnded) return false;
+
+
+
+        if (row < 0 || row >= 3 || col < 0 || col >= 3) return false;
+
+        if (board[row][col] != null) return false;
+
+        board[row][col] = currentPlayer;
+
+        checkEndGame();
+        if (!isGameEnded) {
+            endTurn();
         }
-        else
-        {
-            return false;
-        }
+
         return true;
     }
 
-    public void endTurn(){
-        checkEndGame();
-        if (currentPlayer.equals("B")){
-            currentPlayer = "R";
-        }
-        else {
-            currentPlayer = "B";
-        }
+    public void endTurn() {
+        currentPlayer = currentPlayer.equals("B") ? "R" : "B";
     }
 
     @Override
-    public String getGameEnd()
-    {
-        String boardStatusEnd = "";
-        for(int row = 0; row < 3; row++){
-            for(int col = 0; col < 3; col++){
-                if (boardBlink[row][col].equals("1"))
-                {
-                    boardStatusEnd += "1";
-                }
-                else
-                {
-                    boardStatusEnd += "0";
-                }
+    public String getGameEnd() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                sb.append(boardBlink[row][col].equals("1") ? "1" : "0");
             }
         }
-        return boardStatusEnd;
+        return sb.toString();
     }
 
     @Override
-    public boolean isGameEnded()
-    {
+    public boolean isGameEnded() {
         return isGameEnded;
     }
 
-    public String checkEndGame()
-    {
-        for (int row = 0; row < board.length; row++)
-        {
+    @Override
+    public String getBoardStatus() {
+        return "";
+    }
+
+    public void checkEndGame() {
+
+        // rows
+        for (int row = 0; row < 3; row++) {
             if (board[row][0] != null &&
                     board[row][0].equals(board[row][1]) &&
-                    board[row][1].equals(board[row][2]))
-            {
+                    board[row][1].equals(board[row][2])) {
+
                 isGameEnded = true;
-                for(int col = 0; col < board.length; col++)
-                {
-                    boardBlink[row][col] = "1";
-                }
-            }
-        }
-        for (int col = 0; col < board.length; col++)
-        {
-            if (board[0][col] != null &&
-                    board[0][col].equals(board[1][col]) &&
-                    board[1][col].equals(board[2][col]))
-            {
-                isGameEnded = true;
-                for(int row = 0; row < board.length; row++)
-                {
+                for (int col = 0; col < 3; col++) {
                     boardBlink[row][col] = "1";
                 }
             }
         }
 
-        // Check diagonals
+        // columns
+        for (int col = 0; col < 3; col++) {
+            if (board[0][col] != null &&
+                    board[0][col].equals(board[1][col]) &&
+                    board[1][col].equals(board[2][col])) {
+
+                isGameEnded = true;
+                for (int row = 0; row < 3; row++) {
+                    boardBlink[row][col] = "1";
+                }
+            }
+        }
+
+        // diagonals
         if (board[0][0] != null &&
                 board[0][0].equals(board[1][1]) &&
-                board[1][1].equals(board[2][2]))
-        {
+                board[1][1].equals(board[2][2])) {
+
             isGameEnded = true;
             boardBlink[0][0] = "1";
             boardBlink[1][1] = "1";
@@ -136,13 +135,12 @@ public class TicTacToe implements Game{
 
         if (board[0][2] != null &&
                 board[0][2].equals(board[1][1]) &&
-                board[1][1].equals(board[2][0]))
-        {
+                board[1][1].equals(board[2][0])) {
+
             isGameEnded = true;
             boardBlink[0][2] = "1";
             boardBlink[1][1] = "1";
             boardBlink[2][0] = "1";
         }
-        return null;
     }
 }
