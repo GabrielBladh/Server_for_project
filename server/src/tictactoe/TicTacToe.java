@@ -1,4 +1,8 @@
-public class TicTacToe implements Game{
+package tictactoe;
+
+import Game.Game;
+
+public class TicTacToe implements Game {
 
     String[][] board = new String[3][3];
     String[][] boardBlink = new String[3][3];

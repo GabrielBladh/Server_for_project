@@ -1,3 +1,5 @@
+package checkers;
+import Game.Game;
 
 public class Checkers implements Game {
 
