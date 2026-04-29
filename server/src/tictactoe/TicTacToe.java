@@ -32,6 +32,9 @@ public class TicTacToe implements Game {
         }
         return boardStatus;
     }
+    public String getBoardStatus(){
+        return "";
+    }
 
     public String getTurn()
     {
