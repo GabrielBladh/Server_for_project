@@ -52,13 +52,22 @@ public class TicTacToe implements Game {
     public boolean placeTile(int row, int col) {
         if (isGameEnded) return false;
 
+        boolean found = false;
+        int value = row * 8 + col;
 
-
-        if (row < 0 || row >= 3 || col < 0 || col >= 3) return false;
-
-        if (board[row][col] != null) return false;
-
-        board[row][col] = currentPlayer;
+        for (int row1 = 0; row1 <3 ; row1++) {
+            for (int col1 = 0; col1 < 3 ; col1++) {
+                for (int b : buttons[row1][col1]) {
+                    if (b == value) {
+                        found = true;
+                    }
+                }
+                if  (found){
+                    board[row1][col1] = currentPlayer;
+                    found = false;
+                }
+            }
+        }
 
         checkEndGame();
         if (!isGameEnded) {
