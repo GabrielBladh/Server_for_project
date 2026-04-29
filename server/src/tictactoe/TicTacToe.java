@@ -2,7 +2,7 @@ package tictactoe;
 
 import Game.Game;
 
-public class TicTacToe implements Game {
+public class TicTacToe implements Game{
 
     String[][] board = new String[3][3];
     String[][] boardBlink = new String[3][3];
@@ -109,8 +109,8 @@ public class TicTacToe implements Game {
         for (int col = 0; col < board.length; col++)
         {
             if (board[0][col] != null &&
-            board[0][col].equals(board[1][col]) &&
-            board[1][col].equals(board[2][col]))
+                    board[0][col].equals(board[1][col]) &&
+                    board[1][col].equals(board[2][col]))
             {
                 isGameEnded = true;
                 for(int row = 0; row < board.length; row++)
@@ -122,8 +122,8 @@ public class TicTacToe implements Game {
 
         // Check diagonals
         if (board[0][0] != null &&
-        board[0][0].equals(board[1][1]) &&
-        board[1][1].equals(board[2][2]))
+                board[0][0].equals(board[1][1]) &&
+                board[1][1].equals(board[2][2]))
         {
             isGameEnded = true;
             boardBlink[0][0] = "1";
@@ -132,8 +132,8 @@ public class TicTacToe implements Game {
         }
 
         if (board[0][2] != null &&
-        board[0][2].equals(board[1][1]) &&
-        board[1][1].equals(board[2][0]))
+                board[0][2].equals(board[1][1]) &&
+                board[1][1].equals(board[2][0]))
         {
             isGameEnded = true;
             boardBlink[0][2] = "1";

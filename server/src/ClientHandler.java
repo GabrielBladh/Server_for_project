@@ -1,9 +1,7 @@
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import chess.Chess;
-import checkers.Checkers;
-import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
     Socket socket;
@@ -37,14 +35,6 @@ public class ClientHandler implements Runnable {
             else if (command.equals("Tic Tac Toe")) {
                 controller.setGame(new TicTacToe());
                 System.out.println("Response: Tic Tac Toe : started");
-                out.println("StartGame");
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("Chess"))
-            {
-                controller.setGame(new Chess());
-                System.out.println("Response: Chess : started");
                 out.println("StartGame");
                 out.flush();
                 socket.close();

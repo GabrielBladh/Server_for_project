@@ -1,6 +1,7 @@
 package checkers;
 import Game.Game;
 
+
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
