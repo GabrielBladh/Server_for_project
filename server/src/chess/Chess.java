@@ -73,8 +73,12 @@ public class Chess implements Game
         }
     }
 
-    @Override
     public String getGameStatus()
+    {
+        return "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN";
+    }
+
+    public String getBoardStatus()
     {
         String boardStatus = "";
         for (int row = 0; row < 8; row++) {

@@ -2,7 +2,9 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import chess.Chess;
+import Game.Game;
+import checkers.Checkers;
+import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
     Socket socket;
@@ -33,17 +35,19 @@ public class ClientHandler implements Runnable {
                 out.flush();
                 socket.close();
             }
-            else if (command.equals("Tic Tac Toe")) {
-                controller.setGame(new TicTacToe());
-                System.out.println("Response: Tic Tac Toe : started");
+            else if (command.equals("Checkers AI")) {
+                Checkers aiGame = new Checkers();
+                aiGame.setAI(true);
+                controller.setGame(aiGame);
+                System.out.println("Response: Checkers AI started");
                 out.println("StartGame");
                 out.flush();
                 socket.close();
             }
-            else if (command.equals("Chess"))
-            {
-                controller.setGame(new Chess());
-                System.out.println("Response: Chess : started");
+
+            else if (command.equals("Tic Tac Toe")) {
+                controller.setGame(new TicTacToe());
+                System.out.println("Response: Tic Tac Toe : started");
                 out.println("StartGame");
                 out.flush();
                 socket.close();
@@ -52,12 +56,21 @@ public class ClientHandler implements Runnable {
                 String response = controller.getGame().getGameStatus();
                 System.out.println("Response: " + response);
                 out.println(response);
-                if (controller.getGame().isGameEnded())
-                {
-                    String response2 = controller.getGame().getGameEnd();
-                    System.out.println("Response2: " + response2);
-                    out.println(response2);
-                }
+                out.flush();
+                socket.close();
+            }
+            else if (command.equals("update_blink")) {
+                String response = controller.getGame().getGameEnd();
+                System.out.println("Response: " + response);
+                out.println(response);
+                out.flush();
+                socket.close();
+            }
+
+            else if (command.equals("update_chess")){
+                String response = controller.getGame().getBoardStatus();
+                System.out.println("Response: " + response);
+                out.println(response);
                 out.flush();
                 socket.close();
             }
