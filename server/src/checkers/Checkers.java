@@ -1,7 +1,6 @@
 package checkers;
 import Game.Game;
 
-
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
@@ -11,11 +10,13 @@ public class Checkers implements Game {
     int selectedRow = -1;
     int selectedCol = -1;
     String selectedPiece = "";
+    public boolean isPlayingAgainstAI = false;
 
     int blueCounter = 12;
     int redCounter = 12;
     boolean isGameEnded = false;
     boolean multiJumpActive = false;
+    boolean AIgame = false;
 
     public Checkers() {
         setupGame();
@@ -24,6 +25,10 @@ public class Checkers implements Game {
                 blinkBoard[r][c] = "0";
             }
         }
+    }
+
+    public void setAI(boolean AIgame) {
+        this.AIgame = AIgame;
     }
 
     public String getBoardStatus(){
@@ -44,8 +49,11 @@ public class Checkers implements Game {
                 setWinner("B");
             }
         }
-    }
 
+        if (AIgame && currentPlayer.equals("R") && !isGameEnded) {
+            CheckersAI.doComputerMove(this);
+        }
+    }
     public String getTurn(){
         return currentPlayer;
     }
@@ -130,6 +138,9 @@ public class Checkers implements Game {
                     multiJumpActive = true;
                     selectedRow = row;
                     selectedCol = col;
+                    if (AIgame && currentPlayer.equals("R")) {
+                        CheckersAI.doComputerMove(this);
+                    }
                     return true;
                 }
             }
