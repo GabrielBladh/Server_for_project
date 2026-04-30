@@ -21,7 +21,6 @@ public class CheckersAI {
     public static void doComputerMove(Checkers game) {
         new Thread(() -> {
             try {
-                // Tänketid för att simulera en mänsklig motståndare
                 Thread.sleep(1500);
             } catch (InterruptedException e) {
                 System.out.println("AI blev avbruten.");
