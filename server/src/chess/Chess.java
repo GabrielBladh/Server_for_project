@@ -4,6 +4,7 @@ import Game.Game;
 public class Chess implements Game
 {
     private Player currentPlayer = Player.WHITE;
+    private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
     private Player player;
     private int selectedRow = -1;
@@ -71,6 +72,14 @@ public class Chess implements Game
         {
             board[6][col] = new Piece(Player.BLACK, PieceType.BONDE);
         }
+
+        for (int row = 2; row < 6; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                board[row][col] = emptySpace;
+            }
+        }
     }
 
     public String getGameStatus()
@@ -83,7 +92,7 @@ public class Chess implements Game
         String boardStatus = "";
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                if (board[row][col] == null ) {
+                if (isEmpty(row, col)) {
                     boardStatus += "N";
                 }
                 else if (board[row][col].getPiece() == PieceType.BONDE && board[row][col].getOwner() == Player.WHITE) {
@@ -144,19 +153,21 @@ public class Chess implements Game
     @Override
     public boolean placeTile(int row, int col)
     {
-        if (board[row][col] != null && board[row][col].getOwner().equals(currentPlayer))
+        if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer))
         {
             clearValidMoves();
             selectedRow = row;
             selectedCol = col;
             checkMoves(row, col);
+            System.out.println("Hej");
             return true;
         }
         if (selectedRow != -1 && selectedCol != -1 && validMove[row][col])
         {
+            System.out.println("Hejsan");
             Piece movingPiece = board[selectedRow][selectedCol];
             board[row][col] = movingPiece;
-            board[selectedRow][selectedCol] = null;
+            board[selectedRow][selectedCol] = emptySpace;
 
             clearValidMoves();
 
@@ -171,17 +182,42 @@ public class Chess implements Game
 
     public void checkMoves(int row, int col)
     {
+        //Hur bonde kan röra sig
         if (board[row][col].getPiece() == PieceType.BONDE)
         {
-            if (board[row][col].getOwner().equals(Player.WHITE))
+            if (Player.WHITE.equals(board[row][col].getOwner()))
             {
-                markIfValid(row + 1, col);
+                if (row + 1 < 8 && col + 1 < 8 && Player.BLACK.equals(board[row + 1][col + 1].getOwner()))
+                {
+                    markIfValid(row + 1, col + 1);
+                }
+                if (row + 1 < 8 && col - 1 >= 0 && Player.BLACK.equals(board[row + 1][col - 1].getOwner()))
+                {
+                    markIfValid(row + 1, col - 1);
+                }
+                if (row + 1 < 8 && isEmpty(row + 1, col))
+                {
+                    markIfValid(row + 1, col);
+                }
             }
             if (board[row][col].getOwner().equals(Player.BLACK))
             {
-                markIfValid(row - 1, col);
+                if (row - 1 < 8 && col - 1 < 8 && Player.WHITE.equals(board[row - 1][col - 1].getOwner()))
+                {
+                    markIfValid(row - 1, col - 1);
+                }
+                if (row - 1 < 8 && col + 1 >= 0 && Player.WHITE.equals(board[row - 1][col + 1].getOwner()))
+                {
+                    markIfValid(row - 1, col + 1);
+                }
+                if (row - 1 < 8 && isEmpty(row - 1, col))
+                {
+                    markIfValid(row - 1, col);
+                }
             }
         }
+
+        //Hur häst kan röra sig
         else if (board[row][col].getPiece() == PieceType.HÄST)
         {
             for (int i = 0; i < hästMoves.length; i++)
@@ -192,6 +228,8 @@ public class Chess implements Game
                 markIfValid(newRow, newCol);
             }
         }
+
+        //Hur torn kan röra sig
         else if (board[row][col].getPiece() == PieceType.TORN)
         {
             for (int i = 0; i < tornMoves.length; i++)
@@ -209,6 +247,8 @@ public class Chess implements Game
                 }
             }
         }
+
+        //Hur löpare kan röra sig
         else if (board[row][col].getPiece() == PieceType.LÖPARE)
         {
             for (int i = 0; i < löpareMoves.length; i++)
@@ -228,6 +268,8 @@ public class Chess implements Game
                 }
             }
         }
+
+        //Hur drottning kan röra sig
         else if (board[row][col].getPiece() == PieceType.DROTTNING)
         {
             for (int i = 0; i < drottningMoves.length; i++)
@@ -247,6 +289,8 @@ public class Chess implements Game
                 }
             }
         }
+
+        //Hur kung kan röra sig
         else if (board[row][col].getPiece() == PieceType.KUNG)
         {
             for (int i = 0; i < kungMoves.length; i++)
@@ -263,7 +307,7 @@ public class Chess implements Game
     {
         if (row >= 0 && row < 8 && col >= 0 && col < 8)
         {
-            if (board[row][col] == null)
+            if (isEmpty(row, col) || !board[row][col].getOwner().equals(currentPlayer))
             {
                 validMove[row][col] = true;
             }
@@ -277,13 +321,13 @@ public class Chess implements Game
             return false;
         }
 
-        if (board[row][col] == null)
+        if (isEmpty(row, col))
         {
             validMove[row][col] = true;
             return true; // can continue sliding
         }
 
-        if (board[row][col].getOwner() != currentPlayer)
+        if (!board[row][col].getOwner().equals(currentPlayer))
         {
             validMove[row][col] = true;
         }
@@ -330,5 +374,10 @@ public class Chess implements Game
     public boolean isGameEnded()
     {
         return false;
+    }
+
+    private boolean isEmpty(int row, int col)
+        {
+        return board[row][col].getPiece() == PieceType.NONE;
     }
 }

@@ -7,6 +7,7 @@ public enum PieceType
     LÖPARE,
     KUNG,
     DROTTNING,
-    BONDE
+    BONDE,
+    NONE
 
 }
