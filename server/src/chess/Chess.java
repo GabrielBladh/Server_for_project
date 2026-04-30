@@ -4,7 +4,6 @@ import Game.Game;
 public class Chess implements Game
 {
     private Player currentPlayer = Player.WHITE;
-    private int tilesPerMove;
     private Piece[][] board = new Piece[8][8];
     private Player player;
     private int selectedRow = -1;
@@ -149,7 +148,8 @@ public class Chess implements Game
             checkMoves(row, col);
             return true;
         }
-        if (selectedRow != -1 && selectedCol != -1 && validMove[row][col]){
+        if (selectedRow != -1 && selectedCol != -1 && validMove[row][col])
+        {
             Piece movingPiece = board[selectedRow][selectedCol];
             board[row][col] = movingPiece;
             board[selectedRow][selectedCol] = null;
