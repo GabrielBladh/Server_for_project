@@ -1,5 +1,3 @@
-package tictactoe;
-
 import Game.Game;
 
 public class TicTacToe implements Game {

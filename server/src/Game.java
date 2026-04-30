@@ -1,5 +1,3 @@
-package Game;
-
 public interface Game {
 
     String getGameStatus();

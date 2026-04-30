@@ -1,9 +1,8 @@
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import chess.Chess;
-import checkers.Checkers;
-import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
     Socket socket;
