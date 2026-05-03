@@ -84,7 +84,8 @@ public class Chess implements Game
 
     public String getGameStatus()
     {
-        return "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN";
+        String moves = ValidMovesString();
+        return moves.replace('1', 'G').replace('0', 'N');
     }
 
     public String getBoardStatus()
@@ -159,12 +160,10 @@ public class Chess implements Game
             selectedRow = row;
             selectedCol = col;
             checkMoves(row, col);
-            System.out.println("Hej");
             return true;
         }
         if (selectedRow != -1 && selectedCol != -1 && validMove[row][col])
         {
-            System.out.println("Hejsan");
             Piece movingPiece = board[selectedRow][selectedCol];
             board[row][col] = movingPiece;
             board[selectedRow][selectedCol] = emptySpace;
@@ -198,6 +197,11 @@ public class Chess implements Game
                 if (row + 1 < 8 && isEmpty(row + 1, col))
                 {
                     markIfValid(row + 1, col);
+
+                    if (!board[row][col].getMoved() && row + 2 < 8 && isEmpty(row + 2, col)) {
+                        markIfValid(row + 2, col);
+                        board[row][col].setMoved();
+                    }
                 }
             }
             if (board[row][col].getOwner().equals(Player.BLACK))
@@ -213,6 +217,10 @@ public class Chess implements Game
                 if (row - 1 < 8 && isEmpty(row - 1, col))
                 {
                     markIfValid(row - 1, col);
+                    if (!board[row][col].getMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) {
+                        markIfValid(row - 2, col);
+                        board[row][col].setMoved();
+                    }
                 }
             }
         }

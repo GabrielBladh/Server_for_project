@@ -4,6 +4,7 @@ public class Piece
 {
     Player owner;
     PieceType piece;
+    private boolean isMoved = false;
 
     public Piece(Player owner, PieceType piece)
     {
@@ -19,5 +20,13 @@ public class Piece
     public PieceType getPiece()
     {
         return piece;
+    }
+
+    public boolean getMoved(){
+        return isMoved;
+    }
+
+    public void setMoved(){
+        isMoved = true;
     }
 }
