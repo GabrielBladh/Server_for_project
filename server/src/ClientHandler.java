@@ -2,7 +2,6 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import Game.Game;
 import checkers.Checkers;
 import chess.Chess;
 import tictactoe.TicTacToe;
@@ -14,8 +13,6 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Socket socket, Controller controller) {
         this.socket = socket;
         this.controller = controller;
-
-
     }
 
     @Override
@@ -26,80 +23,83 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
-            String command = in.readLine();
-            System.out.println("Request: " + command);
+            while (true){
+                String command = in.readLine();
+                if (command == null){
+                    System.out.println("Disconnected connection from " + socket.getInetAddress().getHostName());
+                    socket.close();
+                    break;
+                }
+                System.out.println("Request: " + command);
 
-            if (command.equals("Checkers")) {
-                controller.setGame(new Checkers());
-                System.out.println("Response: Checkers started");
-                out.println("StartGame");
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("Checkers AI")) {
-                Checkers aiGame = new Checkers();
-                aiGame.setAI(true);
-                controller.setGame(aiGame);
-                System.out.println("Response: Checkers AI started");
-                out.println("StartGame");
-                out.flush();
-                socket.close();
-            }
+                if (command.equals("Checkers")) {
+                    controller.setGame(new Checkers());
+                    System.out.println("Checkers started");
+                }
+                else if (command.equals("Checkers AI")) {
+                    Checkers aiGame = new Checkers();
+                    aiGame.setAI(true);
+                    controller.setGame(aiGame);
+                    System.out.println("Checkers AI started");
+                }
 
-            else if (command.equals("Tic Tac Toe")) {
-                controller.setGame(new TicTacToe());
-                System.out.println("Response: Tic Tac Toe : started");
-                out.println("StartGame");
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("Chess"))
-            {
-                controller.setGame(new Chess());
-                System.out.println("Response: Chess : started");
-                out.println("StartGame");
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("update")) {
-                String response = controller.getGame().getGameStatus();
-                System.out.println("Response: " + response);
-                out.println(response);
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("update_blink")) {
-                String response = controller.getGame().getGameEnd();
-                System.out.println("Response: " + response);
-                out.println(response);
-                out.flush();
-                socket.close();
-            }
+                else if (command.equals("Tic Tac Toe")) {
+                    controller.setGame(new TicTacToe());
+                    System.out.println("Tic Tac Toe started");
+                }
+                else if (command.equals("Tic Tac Toe AI")) {
+                    TicTacToe aiGame = new TicTacToe();
+                    aiGame.setAI(true);
+                    controller.setGame(aiGame);
+                    System.out.println("Tic Tac Toe AI started");
+                }
+                else if (command.equals("Chess"))
+                {
+                    controller.setGame(new Chess());
+                    System.out.println("Chess started");
+                }
+                else if (command.equals("update")) {
+                    if (controller.getGame() == null){
+                        System.out.println("Game is null");
+                        out.println("noGame");
+                        out.flush();
+                        continue;
+                    }
+                    String response = controller.getGame().getGameStatus();
+                    System.out.println("Response: " + response);
+                    out.println(response);
+                    out.flush();
 
-            else if (command.equals("update_chess")){
-                String response = controller.getGame().getBoardStatus();
-                System.out.println("Response: " + response);
-                out.println(response);
-                out.flush();
-                socket.close();
-            }
-            else if (command.equals("turn")) {
-                String response = controller.getGame().getTurn();
-                out.println(response);
-                out.flush();
-                socket.close();
-            }
-            else{
-                System.out.println("Response: " + command);
-                String[] commands = command.split(":");
-                controller.getGame().placeTile(Integer.parseInt(commands[0]), Integer.parseInt(commands[1]));
-                out.println(commands[0] + ":" + commands[1]);
-                out.flush();
-                socket.close();
+                }
+                else if (command.equals("update_blink")) {
+                    String response = controller.getGame().getGameEnd();
+                    System.out.println("Response: " + response);
+                    out.println(response);
+                    out.flush();
 
+                }
+
+                else if (command.equals("update_chess")){
+                    String response = controller.getGame().getBoardStatus();
+                    System.out.println("Response: " + response);
+                    out.println(response);
+                    out.flush();
+                }
+                else if (command.equals("turn")) {
+                    String response = controller.getGame().getTurn();
+                    System.out.println("Response: " + response);
+                    out.println(response);
+                    out.flush();
+                }
+                else if (command.equals("press")) {
+                    command = in.readLine();
+                    String[] commands = command.split(":");
+                    int x_värde = Integer.parseInt(commands[0]);
+                    int y_värde = Integer.parseInt(commands[1]);
+                    controller.getGame().placeTile(x_värde, y_värde);
+                    System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+                }
             }
-
-
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
