@@ -84,8 +84,7 @@ public class Chess implements Game
 
     public String getGameStatus()
     {
-        String moves = ValidMovesString();
-        return moves.replace('1', 'G').replace('0', 'N');
+        return ValidMovesString();
     }
 
     public String getBoardStatus()
