@@ -13,6 +13,7 @@ public class TicTacToe implements Game {
             { {25,26,33,34}, {27,28,35,36},{29,30,37,38} },
             { {41,42,49,50}, {43,44,51,52}, {45,46,53,54} }
     };
+    boolean AI = false;
 
     public TicTacToe() {
         boardBlink = new String[][]{
@@ -20,6 +21,10 @@ public class TicTacToe implements Game {
                 {"0","0","0"},
                 {"0","0","0"}
         };
+    }
+
+    public void setAI(boolean AI) {
+        this.AI = AI;
     }
 
     @Override
