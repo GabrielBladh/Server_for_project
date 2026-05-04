@@ -8,12 +8,14 @@ public class TicTacToe implements Game {
     String[][] boardBlink = new String[3][3];
     String currentPlayer = "B";
     boolean isGameEnded = false;
+    boolean aiGame;
     int[][][] buttons = {
             { {9,10,17,18}, {11,12,19,20}, {13,14,21,22} },
             { {25,26,33,34}, {27,28,35,36},{29,30,37,38} },
             { {41,42,49,50}, {43,44,51,52}, {45,46,53,54} }
     };
     boolean AI = false;
+    private boolean AIgame = false;
 
     public TicTacToe() {
         boardBlink = new String[][]{
@@ -23,9 +25,6 @@ public class TicTacToe implements Game {
         };
     }
 
-    public void setAI(boolean AI) {
-        this.AI = AI;
-    }
 
     @Override
     public String getGameStatus() {
@@ -60,30 +59,45 @@ public class TicTacToe implements Game {
         boolean found = false;
         int value = row * 8 + col;
 
-        for (int row1 = 0; row1 <3 ; row1++) {
+        for (int row1 = 0; row1 < 3 ; row1++) {
             for (int col1 = 0; col1 < 3 ; col1++) {
                 for (int b : buttons[row1][col1]) {
                     if (b == value) {
                         found = true;
                     }
                 }
-                if  (found){
+                if (found) {
+                    if (board[row1][col1] != null) {
+                        return false;
+                    }
                     board[row1][col1] = currentPlayer;
-                    found = false;
+                    checkEndGame();
+                    if (!isGameEnded) {
+                        endTurn();
+                    }
+                    return true;
                 }
             }
         }
+        return false;
+    }
+    public void placeTileAI(int r, int c) {
+        if (isGameEnded) return;
 
-        checkEndGame();
-        if (!isGameEnded) {
-            endTurn();
+        if (board[r][c] == null) {
+            board[r][c] = currentPlayer;
+            checkEndGame();
+            if (!isGameEnded) {
+                endTurn();
+            }
         }
-
-        return true;
     }
 
     public void endTurn() {
         currentPlayer = currentPlayer.equals("B") ? "R" : "B";
+        if (AIgame && currentPlayer.equals("R") && !isGameEnded) {
+            doComputerMove();
+        }
     }
 
     @Override
@@ -157,4 +171,27 @@ public class TicTacToe implements Game {
             boardBlink[2][0] = "1";
         }
     }
-}
+    public void setAI(boolean AIgame) {
+        this.AIgame = AIgame;
+    }
+
+    public boolean isAITurn() {
+        return AIgame && currentPlayer.equals("R");
+    }
+    private void doComputerMove() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+
+            if (isGameEnded || !currentPlayer.equals("R")) return;
+            int[] bestMove = TicTacToeAI.getBestMove(board);
+
+            if (bestMove[0] != -1 && bestMove[1] != -1) {
+                System.out.println("AI väljer rad: " + bestMove[0] + " kolumn: " + bestMove[1]);
+                placeTileAI(bestMove[0], bestMove[1]);
+            }
+        }).start();
+    }}
