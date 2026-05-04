@@ -385,4 +385,8 @@ public class Checkers implements Game {
         board[5][4] = "R";
         board[5][6] = "R";
     }
+
+    public boolean isAITurn() {
+        return AIgame && currentPlayer.equals("R");
+    }
 }

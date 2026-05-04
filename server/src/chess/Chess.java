@@ -9,7 +9,7 @@ public class Chess implements Game
     private Player player;
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private boolean[][] validMove = new boolean[8][8];
+    private String[][] validMove = new String[8][8];
     int[][] hästMoves = {
             { 2, 1}, { 2, -1},
             {-2, 1}, {-2, -1},
@@ -84,52 +84,66 @@ public class Chess implements Game
 
     public String getGameStatus()
     {
-        String moves = ValidMovesString();
-        return moves.replace('1', 'G').replace('0', 'N');
+        return ValidMovesString();
     }
 
     public String getBoardStatus()
     {
         String boardStatus = "";
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                if (isEmpty(row, col)) {
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                if (isEmpty(row, col))
+                {
                     boardStatus += "N";
                 }
-                else if (board[row][col].getPiece() == PieceType.BONDE && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.BONDE && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "B";
                 }
-                else if (board[row][col].getPiece() == PieceType.BONDE && board[row][col].getOwner() == Player.BLACK) {
+                else if (board[row][col].getPiece() == PieceType.BONDE && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "b";
                 }
-                else if  (board[row][col].getPiece() == PieceType.HÄST && board[row][col].getOwner() == Player.BLACK) {
+                else if  (board[row][col].getPiece() == PieceType.HÄST && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "h";
                 }
-                else if (board[row][col].getPiece() == PieceType.HÄST && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.HÄST && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "H";
                 }
-                else if (board[row][col].getPiece() == PieceType.KUNG && board[row][col].getOwner() == Player.BLACK) {
+                else if (board[row][col].getPiece() == PieceType.KUNG && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "k";
                 }
-                else if (board[row][col].getPiece() == PieceType.KUNG && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.KUNG && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "K";
                 }
-                else if  (board[row][col].getPiece() == PieceType.DROTTNING && board[row][col].getOwner() == Player.BLACK) {
+                else if  (board[row][col].getPiece() == PieceType.DROTTNING && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "d";
                 }
-                else if (board[row][col].getPiece() == PieceType.DROTTNING && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.DROTTNING && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "D";
                 }
-                else if (board[row][col].getPiece() == PieceType.TORN && board[row][col].getOwner() == Player.BLACK) {
+                else if (board[row][col].getPiece() == PieceType.TORN && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "t";
                 }
-                else if (board[row][col].getPiece() == PieceType.TORN && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.TORN && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "T";
                 }
-                else if  (board[row][col].getPiece() == PieceType.LÖPARE && board[row][col].getOwner() == Player.BLACK) {
+                else if  (board[row][col].getPiece() == PieceType.LÖPARE && board[row][col].getOwner() == Player.BLACK)
+                {
                     boardStatus += "l";
                 }
-                else if (board[row][col].getPiece() == PieceType.LÖPARE && board[row][col].getOwner() == Player.WHITE) {
+                else if (board[row][col].getPiece() == PieceType.LÖPARE && board[row][col].getOwner() == Player.WHITE)
+                {
                     boardStatus += "L";
                 }
             }
@@ -139,16 +153,31 @@ public class Chess implements Game
 
     public String ValidMovesString()
     {
-        StringBuilder sb = new StringBuilder();
+        String validMovesStringBuilder = "";
 
         for (int row = 0; row < 8; row++)
         {
             for (int col = 0; col < 8; col++)
             {
-                sb.append(validMove[row][col] ? '1' : '0');
+                if (validMove[row][col] == null)
+                {
+                    validMovesStringBuilder += "N";
+                }
+                else if (validMove[row][col].equals("B")) //detta ska vara blå men vet inte om klienten kan veta skillnaden mellan dennas string B och boardStatus B
+                {
+                    validMovesStringBuilder += "B";
+                }
+                else if (validMove[row][col].equals("R"))
+                {
+                    validMovesStringBuilder += "R";
+                }
+                else if (validMove[row][col].equals("G"))
+                {
+                    validMovesStringBuilder += "G";
+                }
             }
         }
-        return sb.toString();
+        return validMovesStringBuilder;
     }
 
     @Override
@@ -159,15 +188,23 @@ public class Chess implements Game
             clearValidMoves();
             selectedRow = row;
             selectedCol = col;
+            markBlue(selectedRow, selectedCol);
             checkMoves(row, col);
             return true;
         }
-        if (selectedRow != -1 && selectedCol != -1 && validMove[row][col])
+        if (validMove[row][col] == null)
         {
+            return false;
+        }
+        if (selectedRow != -1 && selectedCol != -1 && validMove[row][col].equals("G") || validMove[row][col].equals("R"))
+        {
+            if (board[selectedRow][selectedCol].getPiece().equals(PieceType.BONDE))
+            {
+                board[selectedRow][selectedCol].setMoved();
+            }
             Piece movingPiece = board[selectedRow][selectedCol];
             board[row][col] = movingPiece;
             board[selectedRow][selectedCol] = emptySpace;
-
             clearValidMoves();
 
             selectedRow = -1;
@@ -198,28 +235,26 @@ public class Chess implements Game
                 {
                     markIfValid(row + 1, col);
 
-                    if (!board[row][col].getMoved() && row + 2 < 8 && isEmpty(row + 2, col)) {
+                    if (!board[row][col].getisMoved() && row + 2 < 8 && isEmpty(row + 2, col)) {
                         markIfValid(row + 2, col);
-                        board[row][col].setMoved();
                     }
                 }
             }
             if (board[row][col].getOwner().equals(Player.BLACK))
             {
-                if (row - 1 < 8 && col - 1 < 8 && Player.WHITE.equals(board[row - 1][col - 1].getOwner()))
+                if (row - 1 < 8 && col - 1 > 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner()))
                 {
                     markIfValid(row - 1, col - 1);
                 }
-                if (row - 1 < 8 && col + 1 >= 0 && Player.WHITE.equals(board[row - 1][col + 1].getOwner()))
+                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner()))
                 {
                     markIfValid(row - 1, col + 1);
                 }
                 if (row - 1 < 8 && isEmpty(row - 1, col))
                 {
                     markIfValid(row - 1, col);
-                    if (!board[row][col].getMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) {
+                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) {
                         markIfValid(row - 2, col);
-                        board[row][col].setMoved();
                     }
                 }
             }
@@ -315,9 +350,13 @@ public class Chess implements Game
     {
         if (row >= 0 && row < 8 && col >= 0 && col < 8)
         {
-            if (isEmpty(row, col) || !board[row][col].getOwner().equals(currentPlayer))
+            if (isEmpty(row, col))
             {
-                validMove[row][col] = true;
+                validMove[row][col] = "G";
+            }
+            else if (!board[row][col].getOwner().equals(currentPlayer))
+            {
+                validMove[row][col] = "R";
             }
         }
     }
@@ -331,15 +370,20 @@ public class Chess implements Game
 
         if (isEmpty(row, col))
         {
-            validMove[row][col] = true;
-            return true; // can continue sliding
+            validMove[row][col] = "G";
+            return true;
         }
 
         if (!board[row][col].getOwner().equals(currentPlayer))
         {
-            validMove[row][col] = true;
+            validMove[row][col] = "G";
         }
         return false;
+    }
+
+    private void markBlue(int row, int col)
+    {
+        validMove[row][col] = "B";
     }
 
     private void clearValidMoves(){
@@ -347,9 +391,12 @@ public class Chess implements Game
         {
             for (int col = 0; col < 8; col++ )
             {
-                if (validMove[row][col])
+                if (validMove[row][col] != null)
                 {
-                    validMove[row][col] = false;
+                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R"))
+                    {
+                        validMove[row][col] = null;
+                    }
                 }
             }
         }
@@ -385,7 +432,7 @@ public class Chess implements Game
     }
 
     private boolean isEmpty(int row, int col)
-        {
+    {
         return board[row][col].getPiece() == PieceType.NONE;
     }
 }

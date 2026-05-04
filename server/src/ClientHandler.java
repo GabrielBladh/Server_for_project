@@ -2,6 +2,8 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+
+import Game.Game;
 import checkers.Checkers;
 import chess.Chess;
 import tictactoe.TicTacToe;
@@ -96,8 +98,22 @@ public class ClientHandler implements Runnable {
                     String[] commands = command.split(":");
                     int x_värde = Integer.parseInt(commands[0]);
                     int y_värde = Integer.parseInt(commands[1]);
-                    controller.getGame().placeTile(x_värde, y_värde);
+                    Game currentGame = controller.getGame();
+
+                    if (currentGame instanceof Checkers) {
+                        if (((Checkers) currentGame).isAITurn()) {
+                            System.out.println("Spärrat: Checkers AI tänker!");
+                            continue;
+                        }
+                    } else if (currentGame instanceof TicTacToe) {
+                        if (((TicTacToe) currentGame).isAITurn()) {
+                            System.out.println("Spärrat: TicTacToe AI tänker!");
+                            continue;
+                        }
+                    }
+                    currentGame.placeTile(x_värde, y_värde);
                     System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+
                 }
             }
         } catch (IOException e) {
