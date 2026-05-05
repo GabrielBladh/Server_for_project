@@ -3,7 +3,6 @@ import Game.Game;
 
 public class Chess implements Game {
     private Player currentPlayer = Player.WHITE;
-    private Player enemyPlayer = Player.BLACK;
     private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
     private int selectedRow = -1;
@@ -32,10 +31,8 @@ public class Chess implements Game {
             {-1, -1}
     };
     int[][] drottningMoves = {
-            {1, 0}, {-1, 0},
-            {0, 1}, {0, -1},
-            {1, 1}, {1, -1},
-            {-1, 1}, {-1, -1}
+            {-1, 0}, {1, 0}, {0, -1}, {0, 1},
+            {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
     };
     int[][] kungMoves = {
             {1, 0}, {1, 1}, {1, -1},
@@ -144,7 +141,7 @@ public class Chess implements Game {
 
         if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer))
         {
-            if (checkIfKingChecked(currentPlayer, enemyPlayer))
+            if (checkIfKingChecked(currentPlayer))
             {
                 System.out.println("kungen är i schack");
             }
@@ -355,7 +352,7 @@ public class Chess implements Game {
         }
 
         if (!board[row][col].getOwner().equals(currentPlayer)) {
-            validMove[row][col] = "G";
+            validMove[row][col] = "R";
         }
         return false;
     }
@@ -379,19 +376,15 @@ public class Chess implements Game {
     public void endTurn() {
         if (currentPlayer.equals(Player.WHITE)) {
             currentPlayer = Player.BLACK;
-            enemyPlayer = Player.WHITE;
         } else {
             currentPlayer = Player.WHITE;
-            enemyPlayer = Player.BLACK;
         }
     }
 
-    public boolean checkIfKingChecked(Player currentPlayer, Player enemyPlayer)
+    public boolean checkIfKingChecked(Player currentPlayer)
     {
         int kingPositionRow = -1;
         int kingPositionCol = -1;
-
-
         for (int row = 0; row < board.length; row++)
         {
             for (int col = 0; col < board.length; col++)
@@ -405,14 +398,15 @@ public class Chess implements Game {
                 }
             }
         }
-
-
         if (kingPositionCol == -1 || kingPositionRow == -1)
         {
             return false;
         }
         else
         {
+            Player enemyPlayer = (currentPlayer == Player.WHITE)
+                    ? Player.BLACK
+                    : Player.WHITE;
             return isSquareAttacked(kingPositionRow, kingPositionCol, enemyPlayer);
         }
     }
@@ -420,9 +414,8 @@ public class Chess implements Game {
 
     public boolean isSquareAttacked(int kingPositionRow, int kingPositionCol, Player enemyPlayer)
     {
+        //Checka om bonde attackerar kungen
         int direction;
-
-
         if (enemyPlayer == Player.WHITE)
         {
             direction = 1;
@@ -431,11 +424,7 @@ public class Chess implements Game {
         {
             direction = -1;
         }
-
-
         int pawnRow = kingPositionRow - direction;
-
-
         if (pawnRow >= 0 && pawnRow < board.length)
         {
             if (kingPositionCol - 1 >= 0)
@@ -460,12 +449,11 @@ public class Chess implements Game {
             }
         }
 
-
+        //Checka om häst attackerar kungen
         for (int [] moves : hästMoves)
         {
             int row = kingPositionRow + moves[0];
             int col = kingPositionCol + moves[1];
-
 
             if (row >= 0 && row < board.length && col >= 0 && col < board[0].length)
             {
@@ -473,6 +461,55 @@ public class Chess implements Game {
                 if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST))
                 {
                     return true;
+                }
+            }
+        }
+
+        for (int[] d : drottningMoves)
+        {
+            int row = kingPositionRow + d[0];
+            int col = kingPositionCol + d[1];
+            while (row >= 0 && row < board.length && col >= 0 && col < board[0].length)
+            {
+                Piece piece = board[row][col];
+                if (piece != null && piece.getPiece() != PieceType.NONE)
+                {
+                    if (piece.getOwner().equals(enemyPlayer))
+                    {
+                        boolean isStraight = d[0] == 0 || d[1] == 0;
+                        boolean isDiagonal = Math.abs(d[0]) == Math.abs(d[1]) && d[0] != 0;
+                        if (isStraight && (piece.getPiece().equals(PieceType.TORN) || piece.getPiece().equals(PieceType.DROTTNING)))
+                        {
+                            return true;
+                        }
+                        if (isDiagonal && (piece.getPiece().equals(PieceType.LÖPARE) || piece.getPiece().equals(PieceType.DROTTNING)))
+                        {
+                            return true;
+                        }
+                    }
+                    break;
+                }
+                row += d[0];
+                col += d[1];
+            }
+        }
+        for (int row = -1; row <= 1; row++)
+        {
+            for (int col = -1; col <= 1; col++)
+            {
+                if (row == 0 && col == 0)
+                {
+                    continue;
+                }
+                int nr = kingPositionRow + row;
+                int nc = kingPositionCol + col;
+                if (nr >= 0 && nr < board.length && nc >= 0 && nc < board.length)
+                {
+                    Piece piece = board[nr][nc];
+                        if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.KUNG))
+                    {
+                        return true;
+                    }
                 }
             }
         }
