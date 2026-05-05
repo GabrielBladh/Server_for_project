@@ -91,12 +91,9 @@ public class StockfishEngine {
         } catch (IOException e) {}
     }
 
-    // --- TEST-METOD ---
     public static void main(String[] args) {
         StockfishEngine engine = new StockfishEngine();
 
-        // BYT UT DENNA SÖKVÄG MOT DIN EGNA!
-        // T.ex: "/Users/dittnamn/Downloads/stockfish/stockfish-macos-m1-apple-silicon"
         String pathToStockfish = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
 
         if (engine.startEngine(pathToStockfish)) {

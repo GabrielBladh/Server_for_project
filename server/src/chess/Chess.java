@@ -1,8 +1,9 @@
 package chess;
 import Game.Game;
 
-public class Chess implements Game
-{
+public class Chess implements Game {
+    private boolean AIgame = false;
+    private StockfishEngine engine;
     private Player currentPlayer = Player.WHITE;
     private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
@@ -402,15 +403,20 @@ public class Chess implements Game
         }
     }
 
-    public void endTurn()
-    {
-        if (currentPlayer.equals(Player.WHITE))
-        {
+    public void endTurn() {
+        if (currentPlayer.equals(Player.WHITE)) {
             currentPlayer = Player.BLACK;
-        }
-        else {
+        } else {
             currentPlayer = Player.WHITE;
         }
+
+        if (isAITurn()) {
+            doComputerMove();
+        }
+    }
+
+    public boolean isAITurn() {
+        return AIgame && currentPlayer == Player.BLACK;
     }
 
     @Override
@@ -434,5 +440,128 @@ public class Chess implements Game
     private boolean isEmpty(int row, int col)
     {
         return board[row][col].getPiece() == PieceType.NONE;
+    }
+    public String getFEN() {
+        StringBuilder fen = new StringBuilder();
+
+        // 1. Läs av brädet (Från rad 7 ner till rad 0)
+        // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
+        for (int row = 7; row >= 0; row--) {
+            int emptySquares = 0;
+            for (int col = 0; col < 8; col++) {
+                Piece currentPiece = board[row][col];
+
+                if (currentPiece.getPiece() == PieceType.NONE) {
+                    emptySquares++;
+                } else {
+                    if (emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+                    fen.append(getFenCharacter(currentPiece));
+                }
+            }
+            if (emptySquares > 0) {
+                fen.append(emptySquares);
+            }
+            if (row > 0) {
+                fen.append("/");
+            }
+        }
+
+        // 2. Lägg till vems tur det är
+        fen.append(currentPlayer == Player.WHITE ? " w " : " b ");
+
+        // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
+        // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
+        fen.append("KQkq ");
+
+        // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
+        fen.append("- ");
+
+        // 5. Halvdragsklocka och fullt dragnummer (Vi hårdkodar 0 1 för tillfället)
+        fen.append("0 1");
+
+        return fen.toString();
+    }
+
+    private char getFenCharacter(Piece piece) {
+        boolean isWhite = piece.getOwner() == Player.WHITE;
+        switch (piece.getPiece()) {
+            case BONDE:     return isWhite ? 'P' : 'p';
+            case TORN:      return isWhite ? 'R' : 'r';
+            case HÄST:      return isWhite ? 'N' : 'n'; // OBS! N för kNight i FEN
+            case LÖPARE:    return isWhite ? 'B' : 'b'; // OBS! B för Bishop i FEN
+            case DROTTNING: return isWhite ? 'Q' : 'q';
+            case KUNG:      return isWhite ? 'K' : 'k';
+            default:        return '?';
+        }
+    }
+    public void setAI(boolean isAI) {
+        this.AIgame = isAI;
+        if (isAI) {
+            engine = new StockfishEngine();
+            String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
+            engine.startEngine(macPath);
+        }
+    }
+
+    private void doComputerMove() {
+        new Thread(() -> {
+            try {
+                // Skapa FEN-strängen från det aktuella brädet
+                String fen = getFEN();
+                System.out.println("AI läser brädet som: " + fen);
+
+                // Be Stockfish tänka (Tänker i 1.5 sekunder = 1500 millisekunder)
+                String bestMove = engine.getBestMove(fen, 1500);
+                System.out.println("Stockfish säger: " + bestMove);
+
+                // bestMove ser ut så här: "e2e4" eller "g8f6"
+                // Nu måste vi översätta detta till koordinater!
+                if (bestMove != null && bestMove.length() >= 4) {
+
+                    // Bokstäverna a-h är kolumnerna 0-7
+                    int fromCol = bestMove.charAt(0) - 'a';
+                    int toCol = bestMove.charAt(2) - 'a';
+
+                    // Siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
+                    // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
+                    int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
+                    int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
+
+                    // Genomför draget direkt på brädet!
+                    System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
+
+                    // --- AI:ns egna händer (vi skapar denna om en sekund) ---
+                    placeTileAI(fromRow, fromCol, toRow, toCol);
+                }
+
+            } catch (Exception e) {
+                System.out.println("Fel i AI-tråden: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
+        if (isGameEnded()) return;
+
+        // 1. Hämta pjäsen som Stockfish vill flytta
+        Piece movingPiece = board[fromRow][fromCol];
+
+        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
+        movingPiece.setMoved();
+
+        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
+        board[toRow][toCol] = movingPiece;
+
+        // 4. Töm den gamla rutan där pjäsen stod innan
+        board[fromRow][fromCol] = emptySpace;
+
+        // 5. Städa upp brädet och byt tur
+        clearValidMoves();
+        selectedRow = -1;
+        selectedCol = -1;
+        endTurn();
     }
 }

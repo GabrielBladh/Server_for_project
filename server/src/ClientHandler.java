@@ -59,8 +59,12 @@ public class ClientHandler implements Runnable {
                 {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
-                }
-                else if (command.equals("update")) {
+                } else if (command.equals("Chess AI")) {
+                    Chess aiGame = new Chess();
+                    aiGame.setAI(true); // Slår på Stockfish!
+                    controller.setGame(aiGame);
+                    System.out.println("Chess AI started");
+                } else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         System.out.println("Game is null");
                         out.println("noGame");
@@ -110,7 +114,14 @@ public class ClientHandler implements Runnable {
                             System.out.println("Spärrat: TicTacToe AI tänker!");
                             continue;
                         }
+                    } else if (currentGame instanceof Chess) { // <-- NYTT FÖR SCHACK!
+                        if (((Chess) currentGame).isAITurn()) {
+                            System.out.println("Spärrat: Stockfish tänker!");
+                            continue;
+                        }
                     }
+
+                    currentGame.placeTile(x_värde, y_värde);
                     currentGame.placeTile(x_värde, y_värde);
                     System.out.println("Button pressed: " + x_värde + ":" + y_värde);
 
