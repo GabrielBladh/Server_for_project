@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import Game.Game;
+import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
 import tictactoe.TicTacToe;
@@ -54,6 +55,9 @@ public class ClientHandler implements Runnable {
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
                     System.out.println("Tic Tac Toe AI started");
+                } else if (command.equals("U4")) {
+                    controller.setGame(new GameModel()); // Startar Omvälvning!
+                    System.out.println("U4 started");
                 }
                 else if (command.equals("Chess"))
                 {
