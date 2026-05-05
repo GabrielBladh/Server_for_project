@@ -164,18 +164,34 @@ public class Chess implements Game {
         if (selectedRow != -1 && selectedCol != -1 &&
                 (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
 
+            board[selectedRow][selectedCol].setMoved();
             int fromRow = selectedRow;
             int fromCol = selectedCol;
-
-            if (board[fromRow][fromCol].getPiece().equals(PieceType.BONDE)) {
-                board[fromRow][fromCol].setMoved();
-            }
 
             if (isEnPassant(fromRow, fromCol, row, col)) {
                 executeEnPassant(row, col);
             }
 
             Piece movingPiece = board[fromRow][fromCol];
+            if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
+                    movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3)
+            {
+                if (col > selectedCol)
+                {
+                    Piece rook = board[selectedRow][selectedCol + 4];
+                    board[selectedRow][selectedCol + 2] = rook;
+                    board[selectedRow][selectedCol + 4] = emptySpace;
+                    rook.setMoved();
+                }
+                else
+                {
+                    Piece rook = board[selectedRow][selectedCol - 3];
+                    board[selectedRow][selectedCol - 1] = rook;
+                    board[selectedRow][selectedCol - 3] = emptySpace;
+                    rook.setMoved();
+                }
+            }
+
             board[row][col] = movingPiece;
             board[fromRow][fromCol] = emptySpace;
             clearValidMoves();
@@ -309,7 +325,7 @@ public class Chess implements Game {
                     int newCol2 = col - 2;
                     markIfValid(row, newCol2);
                 }
-                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN))
+                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN) && isEmpty(row, col + 1) && isEmpty(row, col + 2) && isEmpty(row, col + 3))
                 {
                     int newCol2 = col + 3;
                     markIfValid(row, newCol2);
