@@ -86,11 +86,13 @@ public class StockfishEngine {
     public void stopEngine() {
         try {
             sendCommand("quit");
-            processReader.close();
-            processWriter.close();
-        } catch (IOException e) {}
+            if (processReader != null) processReader.close();
+            if (processWriter != null) processWriter.close();
+            if (engineProcess != null) engineProcess.destroy();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
     public static void main(String[] args) {
         StockfishEngine engine = new StockfishEngine();
 

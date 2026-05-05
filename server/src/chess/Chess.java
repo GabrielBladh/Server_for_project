@@ -436,6 +436,12 @@ public class Chess implements Game {
     {
         return false;
     }
+    public void stopAI() {
+        if (AIgame && engine != null) {
+            System.out.println("Stänger ner Stockfish...");
+            engine.stopEngine();
+        }
+    }
 
     private boolean isEmpty(int row, int col)
     {

@@ -35,10 +35,12 @@ public class ClientHandler implements Runnable {
                 System.out.println("Request: " + command);
 
                 if (command.equals("Checkers")) {
+                    cleanupCurrentGame();
                     controller.setGame(new Checkers());
                     System.out.println("Checkers started");
                 }
                 else if (command.equals("Checkers AI")) {
+                    cleanupCurrentGame();
                     Checkers aiGame = new Checkers();
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
@@ -46,20 +48,23 @@ public class ClientHandler implements Runnable {
                 }
 
                 else if (command.equals("Tic Tac Toe")) {
+                    cleanupCurrentGame();
                     controller.setGame(new TicTacToe());
                     System.out.println("Tic Tac Toe started");
                 }
                 else if (command.equals("Tic Tac Toe AI")) {
+                    cleanupCurrentGame();
                     TicTacToe aiGame = new TicTacToe();
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
                     System.out.println("Tic Tac Toe AI started");
                 }
-                else if (command.equals("Chess"))
-                {
+                else if (command.equals("Chess")) {
+                    cleanupCurrentGame();
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
                 } else if (command.equals("Chess AI")) {
+                    cleanupCurrentGame();
                     Chess aiGame = new Chess();
                     aiGame.setAI(true); // Slår på Stockfish!
                     controller.setGame(aiGame);
@@ -72,14 +77,12 @@ public class ClientHandler implements Runnable {
                         continue;
                     }
                     String response = controller.getGame().getGameStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
                 }
                 else if (command.equals("update_blink")) {
                     String response = controller.getGame().getGameEnd();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
@@ -87,21 +90,19 @@ public class ClientHandler implements Runnable {
 
                 else if (command.equals("update_chess")){
                     String response = controller.getGame().getBoardStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }
                 else if (command.equals("turn")) {
                     String response = controller.getGame().getTurn();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }
-                else if (command.equals("press")) {
-                    command = in.readLine();
+                else if (command.startsWith("press:")) {
                     String[] commands = command.split(":");
-                    int x_värde = Integer.parseInt(commands[0]);
-                    int y_värde = Integer.parseInt(commands[1]);
+                    int x_värde = Integer.parseInt(commands[1]);
+                    int y_värde = Integer.parseInt(commands[2]);
+
                     Game currentGame = controller.getGame();
 
                     if (currentGame instanceof Checkers) {
@@ -114,21 +115,29 @@ public class ClientHandler implements Runnable {
                             System.out.println("Spärrat: TicTacToe AI tänker!");
                             continue;
                         }
-                    } else if (currentGame instanceof Chess) { // <-- NYTT FÖR SCHACK!
+                    } else if (currentGame instanceof Chess) {
                         if (((Chess) currentGame).isAITurn()) {
                             System.out.println("Spärrat: Stockfish tänker!");
                             continue;
                         }
                     }
 
-                    currentGame.placeTile(x_värde, y_värde);
-                    currentGame.placeTile(x_värde, y_värde);
+                    currentGame.placeTile(x_värde, y_värde); // <- Endast EN gång nu!
                     System.out.println("Button pressed: " + x_värde + ":" + y_värde);
-
                 }
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
+        } finally {
+            System.out.println("Anslutning stängd. Städar resurser...");
+            cleanupCurrentGame();
+        }
+    }
+
+    private void cleanupCurrentGame() {
+        Game currentGame = controller.getGame();
+        if (currentGame instanceof Chess) {
+            ((Chess) currentGame).stopAI();
         }
     }
 }
