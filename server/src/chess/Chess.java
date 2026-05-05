@@ -220,7 +220,6 @@ public class Chess implements Game {
                     }
                 }
             }
-            // En passant – ALLTID sist i bonde-logiken
             if (board[row][col].getOwner() == Player.WHITE && row == 4) {
                 markEnPassantIfValid(row, col, +1);
             }
@@ -403,23 +402,24 @@ public class Chess implements Game {
         board[capturedPawnRow][toCol] = emptySpace;
     }
 
+
     private void markEnPassantIfValid(int row, int col, int direction) {
         if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
             return;
         }
 
-        // vänster en passant
-        if (col - 1 >= 0 && row + direction == enPassantRow && col - 1 == enPassantCol) {
-            // gröna rutan man går till
-            validMove[row + direction][col - 1] = "G";
-            // röda bonden som slås
-            validMove[row][col - 1] = "R";
+        if (col - 1 >= 0 &&
+                row + direction == enPassantRow &&
+                col - 1 == enPassantCol) {
+
+            validMove[row + direction][col - 1] = "R";
         }
 
-        // höger en passant
-        if (col + 1 < 8 && row + direction == enPassantRow && col + 1 == enPassantCol) {
-            validMove[row + direction][col + 1] = "G";
-            validMove[row][col + 1] = "R";
+        if (col + 1 < 8 &&
+                row + direction == enPassantRow &&
+                col + 1 == enPassantCol) {
+
+            validMove[row + direction][col + 1] = "R";
         }
     }
 }
