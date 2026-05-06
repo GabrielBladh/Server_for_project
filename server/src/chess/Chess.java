@@ -2,15 +2,17 @@ package chess;
 import Game.Game;
 
 public class Chess implements Game {
+    private boolean AIgame = false; // Från dig
+    private StockfishEngine engine; // Från dig
     private Player currentPlayer = Player.WHITE;
     private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private int enPassantRow = -1;
-    private int enPassantCol = -1;
-    private Player enPassantOwner = Player.NONE;
-    
+    private int enPassantRow = -1; // Från din kompis
+    private int enPassantCol = -1; // Från din kompis
+    private Player enPassantOwner = Player.NONE; // Från din kompis
+
     private String[][] validMove = new String[8][8];
     int[][] hästMoves = {
             {2, 1}, {2, -1},
@@ -139,10 +141,8 @@ public class Chess implements Game {
     @Override
     public boolean placeTile(int row, int col) {
 
-        if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer))
-        {
-            if (checkIfKingChecked(currentPlayer))
-            {
+        if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
+            if (checkIfKingChecked(currentPlayer)) {
                 System.out.println("kungen är i schack");
             }
 
@@ -171,17 +171,13 @@ public class Chess implements Game {
 
             Piece movingPiece = board[fromRow][fromCol];
             if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
-                    movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3)
-            {
-                if (col > selectedCol)
-                {
+                    movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
+                if (col > selectedCol) {
                     Piece rook = board[selectedRow][selectedCol + 4];
                     board[selectedRow][selectedCol + 2] = rook;
                     board[selectedRow][selectedCol + 4] = emptySpace;
                     rook.setMoved();
-                }
-                else
-                {
+                } else {
                     Piece rook = board[selectedRow][selectedCol - 3];
                     board[selectedRow][selectedCol - 1] = rook;
                     board[selectedRow][selectedCol - 3] = emptySpace;
@@ -308,22 +304,18 @@ public class Chess implements Game {
         }
 
         //Hur kung kan röra sig
-        else if (board[row][col].getPiece() == PieceType.KUNG)
-        {
-            for (int i = 0; i < kungMoves.length; i++)
-            {
+        else if (board[row][col].getPiece() == PieceType.KUNG) {
+            for (int i = 0; i < kungMoves.length; i++) {
                 int newRow = row + kungMoves[i][0];
                 int newCol = col + kungMoves[i][1];
 
 
                 markIfValid(newRow, newCol);
-                if (!board[row][col].getisMoved() && !board[row][col - 3].getisMoved() && board[row][col - 3].getPiece().equals(PieceType.TORN) && isEmpty(row, col - 2) && isEmpty(row, col - 1))
-                {
+                if (!board[row][col].getisMoved() && !board[row][col - 3].getisMoved() && board[row][col - 3].getPiece().equals(PieceType.TORN) && isEmpty(row, col - 2) && isEmpty(row, col - 1)) {
                     int newCol2 = col - 2;
                     markIfValid(row, newCol2);
                 }
-                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN) && isEmpty(row, col + 1) && isEmpty(row, col + 2) && isEmpty(row, col + 3))
-                {
+                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN) && isEmpty(row, col + 1) && isEmpty(row, col + 2) && isEmpty(row, col + 3)) {
                     int newCol2 = col + 3;
                     markIfValid(row, newCol2);
                 }
@@ -379,31 +371,32 @@ public class Chess implements Game {
         } else {
             currentPlayer = Player.WHITE;
         }
+
+        if (isAITurn()) {
+            doComputerMove();
+        }
     }
 
-    public boolean checkIfKingChecked(Player currentPlayer)
-    {
+    public boolean isAITurn() {
+        return AIgame && currentPlayer == Player.BLACK;
+    }
+
+    public boolean checkIfKingChecked(Player currentPlayer) {
         int kingPositionRow = -1;
         int kingPositionCol = -1;
-        for (int row = 0; row < board.length; row++)
-        {
-            for (int col = 0; col < board.length; col++)
-            {
+        for (int row = 0; row < board.length; row++) {
+            for (int col = 0; col < board.length; col++) {
                 if (!isEmpty(row, col)
                         && board[row][col].getPiece().equals(PieceType.KUNG)
-                        && board[row][col].getOwner().equals(currentPlayer))
-                {
+                        && board[row][col].getOwner().equals(currentPlayer)) {
                     kingPositionRow = row;
                     kingPositionCol = col;
                 }
             }
         }
-        if (kingPositionCol == -1 || kingPositionRow == -1)
-        {
+        if (kingPositionCol == -1 || kingPositionRow == -1) {
             return false;
-        }
-        else
-        {
+        } else {
             Player enemyPlayer = (currentPlayer == Player.WHITE)
                     ? Player.BLACK
                     : Player.WHITE;
@@ -412,78 +405,60 @@ public class Chess implements Game {
     }
 
 
-    public boolean isSquareAttacked(int kingPositionRow, int kingPositionCol, Player enemyPlayer)
-    {
+    public boolean isSquareAttacked(int kingPositionRow, int kingPositionCol, Player enemyPlayer) {
         //Checka om bonde attackerar kungen
         int direction;
-        if (enemyPlayer == Player.WHITE)
-        {
+        if (enemyPlayer == Player.WHITE) {
             direction = 1;
-        }
-        else
-        {
+        } else {
             direction = -1;
         }
         int pawnRow = kingPositionRow - direction;
-        if (pawnRow >= 0 && pawnRow < board.length)
-        {
-            if (kingPositionCol - 1 >= 0)
-            {
+        if (pawnRow >= 0 && pawnRow < board.length) {
+            if (kingPositionCol - 1 >= 0) {
                 Piece piece = board[pawnRow][kingPositionCol - 1];
                 if (piece != null && piece.getOwner().equals(enemyPlayer)
-                        && piece.getPiece().equals(PieceType.BONDE))
-                {
+                        && piece.getPiece().equals(PieceType.BONDE)) {
                     return true;
                 }
             }
 
 
-            if (kingPositionCol + 1 < board[0].length)
-            {
+            if (kingPositionCol + 1 < board[0].length) {
                 Piece piece = board[pawnRow][kingPositionCol + 1];
                 if (piece != null && piece.getOwner().equals(enemyPlayer)
-                        && piece.getPiece() == PieceType.BONDE)
-                {
+                        && piece.getPiece() == PieceType.BONDE) {
                     return true;
                 }
             }
         }
 
         //Checka om häst attackerar kungen
-        for (int [] moves : hästMoves)
-        {
+        for (int[] moves : hästMoves) {
             int row = kingPositionRow + moves[0];
             int col = kingPositionCol + moves[1];
 
-            if (row >= 0 && row < board.length && col >= 0 && col < board[0].length)
-            {
+            if (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
                 Piece piece = board[row][col];
-                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST))
-                {
+                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST)) {
                     return true;
                 }
             }
         }
 
-        for (int[] d : drottningMoves)
-        {
+        for (int[] d : drottningMoves) {
             int row = kingPositionRow + d[0];
             int col = kingPositionCol + d[1];
-            while (row >= 0 && row < board.length && col >= 0 && col < board[0].length)
-            {
+            while (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
                 Piece piece = board[row][col];
-                if (piece != null && piece.getPiece() != PieceType.NONE)
-                {
-                    if (piece.getOwner().equals(enemyPlayer))
-                    {
+                if (piece != null && piece.getPiece() != PieceType.NONE) {
+                    if (piece.getOwner().equals(enemyPlayer)) {
                         boolean isStraight = d[0] == 0 || d[1] == 0;
                         boolean isDiagonal = Math.abs(d[0]) == Math.abs(d[1]) && d[0] != 0;
-                        if (isStraight && (piece.getPiece().equals(PieceType.TORN) || piece.getPiece().equals(PieceType.DROTTNING)))
-                        {
+                        if (isStraight && (piece.getPiece().equals(PieceType.TORN) || piece.getPiece().equals(PieceType.DROTTNING))) {
                             return true;
                         }
-                        if (isDiagonal && (piece.getPiece().equals(PieceType.LÖPARE) || piece.getPiece().equals(PieceType.DROTTNING)))
-                        {
+                        if (isDiagonal && (piece.getPiece().equals(PieceType.LÖPARE) || piece.getPiece().equals(PieceType.DROTTNING))) {
                             return true;
                         }
                     }
@@ -493,27 +468,29 @@ public class Chess implements Game {
                 col += d[1];
             }
         }
-        for (int row = -1; row <= 1; row++)
-        {
-            for (int col = -1; col <= 1; col++)
-            {
-                if (row == 0 && col == 0)
-                {
+        for (int row = -1; row <= 1; row++) {
+            for (int col = -1; col <= 1; col++) {
+                if (row == 0 && col == 0) {
                     continue;
                 }
                 int nr = kingPositionRow + row;
                 int nc = kingPositionCol + col;
-                if (nr >= 0 && nr < board.length && nc >= 0 && nc < board.length)
-                {
+                if (nr >= 0 && nr < board.length && nc >= 0 && nc < board.length) {
                     Piece piece = board[nr][nc];
-                        if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.KUNG))
-                    {
+                    if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.KUNG)) {
                         return true;
                     }
                 }
             }
         }
         return false;
+    }
+
+    public void stopAI() {
+        if (AIgame && engine != null) {
+            System.out.println("Stänger ner Stockfish...");
+            engine.stopEngine();
+        }
     }
 
 
@@ -536,58 +513,189 @@ public class Chess implements Game {
         return board[row][col].getPiece() == PieceType.NONE;
     }
 
-    private void clearEnPassant() {
-        enPassantRow = -1;
-        enPassantCol = -1;
+    public String getFEN() {
+        StringBuilder fen = new StringBuilder();
 
-        enPassantOwner = Player.NONE;
+        // 1. Läs av brädet (Från rad 7 ner till rad 0)
+        // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
+        for (int row = 7; row >= 0; row--) {
+            int emptySquares = 0;
+            for (int col = 0; col < 8; col++) {
+                Piece currentPiece = board[row][col];
+
+                if (currentPiece.getPiece() == PieceType.NONE) {
+                    emptySquares++;
+                } else {
+                    if (emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+                    fen.append(getFenCharacter(currentPiece));
+                }
+            }
+            if (emptySquares > 0) {
+                fen.append(emptySquares);
+            }
+            if (row > 0) {
+                fen.append("/");
+            }
+        }
+
+        // 2. Lägg till vems tur det är
+        fen.append(currentPlayer == Player.WHITE ? " w " : " b ");
+
+        // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
+        // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
+        fen.append("KQkq ");
+
+        // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
+        fen.append("- ");
+
+        // 5. Halvdragsklocka och fullt dragnummer (Vi hårdkodar 0 1 för tillfället)
+        fen.append("0 1");
+
+        return fen.toString();
     }
 
-    private void registerEnPassant(int startRow, int startCol, int endRow, int endCol) {
-        if (board[endRow][endCol].getPiece() != PieceType.BONDE) {
-            return;
+    private char getFenCharacter(Piece piece) {
+        boolean isWhite = piece.getOwner() == Player.WHITE;
+        switch (piece.getPiece()) {
+            case BONDE:
+                return isWhite ? 'P' : 'p';
+            case TORN:
+                return isWhite ? 'R' : 'r';
+            case HÄST:
+                return isWhite ? 'N' : 'n'; // OBS! N för kNight i FEN
+            case LÖPARE:
+                return isWhite ? 'B' : 'b'; // OBS! B för Bishop i FEN
+            case DROTTNING:
+                return isWhite ? 'Q' : 'q';
+            case KUNG:
+                return isWhite ? 'K' : 'k';
+            default:
+                return '?';
         }
+    }
 
-
-        if (Math.abs(endRow - startRow) == 2) {
-            enPassantRow = (startRow + endRow) / 2;
-            enPassantCol = endCol;
-            enPassantOwner = board[endRow][endCol].getOwner();
+    public void setAI(boolean isAI) {
+        this.AIgame = isAI;
+        if (isAI) {
+            engine = new StockfishEngine();
+            String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
+            engine.startEngine(macPath);
         }
     }
 
-    private boolean isEnPassant(int startRow, int startCol, int endRow, int endCol) {
-        if (board[startRow][startCol].getPiece() != PieceType.BONDE) {
-            return false;
-        }
+    private void doComputerMove() {
+        new Thread(() -> {
+            try {
+                // Skapa FEN-strängen från det aktuella brädet
+                String fen = getFEN();
+                System.out.println("AI läser brädet som: " + fen);
 
-        return endRow == enPassantRow && endCol == enPassantCol;
+                // Be Stockfish tänka (Tänker i 1.5 sekunder = 1500 millisekunder)
+                String bestMove = engine.getBestMove(fen, 1500);
+                System.out.println("Stockfish säger: " + bestMove);
+
+                // bestMove ser ut så här: "e2e4" eller "g8f6"
+                // Nu måste vi översätta detta till koordinater!
+                if (bestMove != null && bestMove.length() >= 4) {
+
+                    // Bokstäverna a-h är kolumnerna 0-7
+                    int fromCol = bestMove.charAt(0) - 'a';
+                    int toCol = bestMove.charAt(2) - 'a';
+
+                    // Siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
+                    // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
+                    int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
+                    int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
+
+                    // Genomför draget direkt på brädet!
+                    System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
+
+                    // --- AI:ns egna händer (vi skapar denna om en sekund) ---
+                    placeTileAI(fromRow, fromCol, toRow, toCol);
+                }
+
+            } catch (Exception e) {
+                System.out.println("Fel i AI-tråden: " + e.getMessage());
+            }
+        }).start();
     }
 
-    private void executeEnPassant(int toRow, int toCol) {
-        int capturedPawnRow =
-                currentPlayer == Player.WHITE ? toRow - 1 : toRow + 1;
-        board[capturedPawnRow][toCol] = emptySpace;
+    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
+        if (isGameEnded()) return;
+
+        // 1. Hämta pjäsen som Stockfish vill flytta
+        Piece movingPiece = board[fromRow][fromCol];
+
+        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
+        movingPiece.setMoved();
+
+        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
+        board[toRow][toCol] = movingPiece;
+
+        // 4. Töm den gamla rutan där pjäsen stod innan
+        board[fromRow][fromCol] = emptySpace;
+
+        // 5. Städa upp brädet och byt tur
+        clearValidMoves();
+        selectedRow = -1;
+        selectedCol = -1;
+        endTurn();
+    }
+
+        private void clearEnPassant () {
+            enPassantRow = -1;
+            enPassantCol = -1;
+
+            enPassantOwner = Player.NONE;
+        }
+
+        private void registerEnPassant ( int startRow, int startCol, int endRow, int endCol){
+            if (board[endRow][endCol].getPiece() != PieceType.BONDE) {
+                return;
+            }
+
+
+            if (Math.abs(endRow - startRow) == 2) {
+                enPassantRow = (startRow + endRow) / 2;
+                enPassantCol = endCol;
+                enPassantOwner = board[endRow][endCol].getOwner();
+            }
+        }
+
+        private boolean isEnPassant ( int startRow, int startCol, int endRow, int endCol){
+            if (board[startRow][startCol].getPiece() != PieceType.BONDE) {
+                return false;
+            }
+
+            return endRow == enPassantRow && endCol == enPassantCol;
+        }
+
+        private void executeEnPassant(int toRow, int toCol) {
+            int capturedPawnRow =
+                    currentPlayer == Player.WHITE ? toRow - 1 : toRow + 1;
+            board[capturedPawnRow][toCol] = emptySpace;
+        }
+
+        private void markEnPassantIfValid ( int row, int col, int direction){
+            if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
+                return;
+            }
+
+            if (col - 1 >= 0 &&
+                    row + direction == enPassantRow &&
+                    col - 1 == enPassantCol) {
+                validMove[row + direction][col - 1] = "R";
+            }
+
+            if (col + 1 < 8 &&
+                    row + direction == enPassantRow &&
+                    col + 1 == enPassantCol) {
+                validMove[row + direction][col + 1] = "R";
+            }
+        }
     }
 
 
-    private void markEnPassantIfValid(int row, int col, int direction) {
-        if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
-            return;
-        }
-
-        if (col - 1 >= 0 &&
-                row + direction == enPassantRow &&
-                col - 1 == enPassantCol) {
-
-            validMove[row + direction][col - 1] = "R";
-        }
-
-        if (col + 1 < 8 &&
-                row + direction == enPassantRow &&
-                col + 1 == enPassantCol) {
-
-            validMove[row + direction][col + 1] = "R";
-        }
-    }
-}

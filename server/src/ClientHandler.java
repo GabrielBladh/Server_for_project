@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import Game.Game;
+import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
 import tictactoe.TicTacToe;
@@ -54,13 +55,20 @@ public class ClientHandler implements Runnable {
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
                     System.out.println("Tic Tac Toe AI started");
+                } else if (command.equals("U4")) {
+                    controller.setGame(new GameModel()); // Startar Omvälvning!
+                    System.out.println("U4 started");
                 }
                 else if (command.equals("Chess"))
                 {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
-                }
-                else if (command.equals("update")) {
+                } else if (command.equals("Chess AI")) {
+                    Chess aiGame = new Chess();
+                    aiGame.setAI(true);
+                    controller.setGame(aiGame);
+                    System.out.println("Tic Tac Toe AI started");
+                }  else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         System.out.println("Game is null");
                         out.println("noGame");
@@ -110,7 +118,14 @@ public class ClientHandler implements Runnable {
                             System.out.println("Spärrat: TicTacToe AI tänker!");
                             continue;
                         }
+                    } else if (currentGame instanceof Chess) { // <-- NYTT FÖR SCHACK!
+                        if (((Chess) currentGame).isAITurn()) {
+                            System.out.println("Spärrat: Stockfish tänker!");
+                            continue;
+                        }
                     }
+
+                    currentGame.placeTile(x_värde, y_värde);
                     currentGame.placeTile(x_värde, y_värde);
                     System.out.println("Button pressed: " + x_värde + ":" + y_värde);
 
