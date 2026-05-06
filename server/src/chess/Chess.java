@@ -159,7 +159,8 @@ public class Chess implements Game {
         }
 
         if (selectedRow != -1 && selectedCol != -1 &&
-                (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
+                (validMove[row][col].equals("G") || validMove[row][col].equals("R")))
+        {
 
             board[selectedRow][selectedCol].setMoved();
             int fromRow = selectedRow;
@@ -207,63 +208,120 @@ public class Chess implements Game {
         //Hur bonde kan röra sig
         if (board[row][col].getPiece() == PieceType.BONDE) {
             if (Player.WHITE.equals(board[row][col].getOwner())) {
-                if (row + 1 < 8 && col + 1 < 8 && Player.BLACK.equals(board[row + 1][col + 1].getOwner())) {
-                    markIfValid(row + 1, col + 1);
+                if (row + 1 < 8 && col + 1 < 8 && Player.BLACK.equals(board[row + 1][col + 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col + 1))
+                    {
+                        markIfValid(row + 1, col + 1);
+                    }
                 }
-                if (row + 1 < 8 && col - 1 >= 0 && Player.BLACK.equals(board[row + 1][col - 1].getOwner())) {
-                    markIfValid(row + 1, col - 1);
+                if (row + 1 < 8 && col - 1 >= 0 && Player.BLACK.equals(board[row + 1][col - 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col - 1))
+                    {
+                        markIfValid(row + 1, col - 1);
+                    }
                 }
-                if (row + 1 < 8 && isEmpty(row + 1, col)) {
-                    markIfValid(row + 1, col);
-
-                    if (!board[row][col].getisMoved() && row + 2 < 8 && isEmpty(row + 2, col)) {
-                        markIfValid(row + 2, col);
+                if (row + 1 < 8 && isEmpty(row + 1, col))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col))
+                    {
+                        markIfValid(row + 1, col);
+                    }
+                    if (!board[row][col].getisMoved() && row + 2 < 8 && isEmpty(row + 2, col))
+                    {
+                        if (!wouldLeaveKingInCheck(row, col, row + 2, col))
+                        {
+                            markIfValid(row + 2, col);
+                        }
                     }
                 }
             }
             if (board[row][col].getOwner().equals(Player.BLACK)) {
-                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner())) {
-                    markIfValid(row - 1, col - 1);
+                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner())) 
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col - 1))
+                    {
+                        markIfValid(row - 1, col - 1);
+                    }
                 }
-                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner())) {
-                    markIfValid(row - 1, col + 1);
+                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner())) 
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col + 1))
+                    {
+                        markIfValid(row - 1, col + 1);  
+                    }
                 }
-                if (row - 1 < 8 && isEmpty(row - 1, col)) {
-                    markIfValid(row - 1, col);
-                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) {
-                        markIfValid(row - 2, col);
+                if (row - 1 < 8 && isEmpty(row - 1, col)) 
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col))
+                    {
+                        markIfValid(row - 1, col);   
+                    }
+                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) 
+                    {
+                        if (!wouldLeaveKingInCheck(row, col, row - 2, col))
+                        {
+                            markIfValid(row - 2, col);
+                        }
                     }
                 }
             }
-            if (board[row][col].getOwner() == Player.WHITE && row == 4) {
-                markEnPassantIfValid(row, col, +1);
+            if (board[row][col].getOwner() == Player.WHITE && row == 4)
+            {
+                if (!wouldLeaveKingInCheck(row, col, row, col + 1))
+                {
+                    markEnPassantIfValid(row, col, +1);
+                }
             }
 
-            if (board[row][col].getOwner() == Player.BLACK && row == 3) {
-                markEnPassantIfValid(row, col, -1);
+            if (board[row][col].getOwner() == Player.BLACK && row == 3)
+            {
+                if (!wouldLeaveKingInCheck(row, col, row, col - 1))
+                {
+                    markEnPassantIfValid(row, col, -1);
+                }
             }
         }
 
         //Hur häst kan röra sig
-        else if (board[row][col].getPiece() == PieceType.HÄST) {
-            for (int i = 0; i < hästMoves.length; i++) {
+        else if (board[row][col].getPiece() == PieceType.HÄST)
+        {
+            for (int i = 0; i < hästMoves.length; i++)
+            {
                 int newRow = row + hästMoves[i][0];
                 int newCol = col + hästMoves[i][1];
 
-                markIfValid(newRow, newCol);
+
+                if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                {
+                    markIfValid(newRow, newCol);
+                }
             }
         }
 
         //Hur torn kan röra sig
-        else if (board[row][col].getPiece() == PieceType.TORN) {
-            for (int i = 0; i < tornMoves.length; i++) {
+        else if (board[row][col].getPiece() == PieceType.TORN)
+        {
+            for (int i = 0; i < tornMoves.length; i++)
+            {
                 int dRow = tornMoves[i][0];
                 int dCol = tornMoves[i][1];
-                for (int step = 1; step < 8; step++) {
+                for (int step = 1; step < 8; step++)
+                {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
-                    if (!markIfValidSliding(newRow, newCol)) {
+
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -275,12 +333,22 @@ public class Chess implements Game {
                 int dRow = löpareMoves[i][0];
                 int dCol = löpareMoves[i][1];
 
-                for (int step = 1; step < 8; step++) {
+
+                for (int step = 1; step < 8; step++)
+                {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
 
-                    if (!markIfValidSliding(newRow, newCol)) {
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -296,8 +364,16 @@ public class Chess implements Game {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
 
-                    if (!markIfValidSliding(newRow, newCol)) {
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -309,15 +385,36 @@ public class Chess implements Game {
                 int newRow = row + kungMoves[i][0];
                 int newCol = col + kungMoves[i][1];
 
-
-                markIfValid(newRow, newCol);
-                if (!board[row][col].getisMoved() && !board[row][col - 3].getisMoved() && board[row][col - 3].getPiece().equals(PieceType.TORN) && isEmpty(row, col - 2) && isEmpty(row, col - 1)) {
-                    int newCol2 = col - 2;
-                    markIfValid(row, newCol2);
+                if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                {
+                    markIfValid(newRow, newCol);
                 }
-                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN) && isEmpty(row, col + 1) && isEmpty(row, col + 2) && isEmpty(row, col + 3)) {
+                if (!board[row][col].getisMoved() &&
+                !board[row][col - 3].getisMoved() &&
+                board[row][col - 3].getPiece().equals(PieceType.TORN) &&
+                isEmpty(row, col - 2) &&
+                isEmpty(row, col - 1) &&
+                !checkIfKingChecked(currentPlayer))
+                {
+                    int newCol2 = col - 2;
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
+                        markIfValid(row, newCol2);
+                    }
+                }
+                if (!board[row][col].getisMoved() &&
+                !board[row][col + 4].getisMoved() &&
+                board[row][col + 4].getPiece().equals(PieceType.TORN) &&
+                isEmpty(row, col + 1) &&
+                isEmpty(row, col + 2) &&
+                isEmpty(row, col + 3) &&
+                !checkIfKingChecked(currentPlayer))
+                {
                     int newCol2 = col + 3;
-                    markIfValid(row, newCol2);
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
+                        markIfValid(row, newCol2);
+                    }
                 }
             }
         }
@@ -440,7 +537,8 @@ public class Chess implements Game {
 
             if (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
                 Piece piece = board[row][col];
-                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST)) {
+                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST))
+                {
                     return true;
                 }
             }
@@ -484,6 +582,26 @@ public class Chess implements Game {
             }
         }
         return false;
+    }
+
+    public boolean wouldLeaveKingInCheck(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8)
+        {
+            return true;
+        }
+        Piece movingPiece = board[fromRow][fromCol];
+        Piece captured = board[toRow][toCol];
+
+        board[toRow][toCol] = movingPiece;
+        board[fromRow][fromCol] = emptySpace;
+
+        boolean inCheck = checkIfKingChecked(movingPiece.getOwner());
+
+        board[fromRow][fromCol] = movingPiece;
+        board[toRow][toCol] = captured;
+
+        return inCheck;
     }
 
     public void stopAI() {
