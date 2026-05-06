@@ -65,7 +65,6 @@ public class StockfishEngine {
         }
     }
 
-    // HUVUDMETODEN: Frågar efter bästa draget baserat på en FEN-sträng
     public String getBestMove(String fen, int waitTimeMS) {
         sendCommand("position fen " + fen);
         sendCommand("go movetime " + waitTimeMS);

@@ -6,7 +6,6 @@ import java.util.Random;
 /**
  * Huvudklassen för spelets logik (Model).
  * Hanterar spelplanen, turer, regler, poängberäkning och mysterier.
- * @author Grupp 22
  */
 public class GameModel implements Game {
     private String lastMystery = ""; // Fixat null-felet!
@@ -247,11 +246,31 @@ public class GameModel implements Game {
     }
 
     @Override
-    public String getTurn() { return ""; }
+    public String getTurn() {
+        if (currentPlayer == Player.PLAYER1) {
+            return "B";
+        } else if (currentPlayer == Player.PLAYER2) {
+            return "R";
+        }
+        return "N";
+    }
     @Override
-    public String getGameEnd() { return ""; }
-    //@Override
-    //public boolean isGameEnded() { return false; }
+    public String getGameEnd() {
+        if (!isGameEnded()) {
+            return "0";
+        }
+
+
+        calculateScore();
+
+        if (player1Score > player2Score) {
+            return "1"; // Spelare 1 vann
+        } else if (player2Score > player1Score) {
+            return "2"; // Spelare 2 vann
+        } else {
+            return "T"; // Tie (Oavgjort)
+        }
+    }
 
     @Override
     public String getGameStatus() {
