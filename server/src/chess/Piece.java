@@ -22,7 +22,8 @@ public class Piece
         return piece;
     }
 
-    public boolean getisMoved(){
+    public boolean getisMoved()
+    {
         return isMoved;
     }
 
