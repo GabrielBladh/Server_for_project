@@ -1,5 +1,7 @@
 package chess;
 import Game.Game;
+
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Chess implements Game {
@@ -13,8 +15,11 @@ public class Chess implements Game {
     private int enPassantRow = -1; // Från din kompis
     private int enPassantCol = -1; // Från din kompis
     private Player enPassantOwner = Player.NONE; // Från din kompis
-
     private String[][] validMove = new String[8][8];
+    private boolean promotionMode = false;
+    private int promotionRow = -1;
+    private int promotionCol = -1;
+
     int[][] hästMoves = {
             {2, 1}, {2, -1},
             {-2, 1}, {-2, -1},
@@ -79,9 +84,11 @@ public class Chess implements Game {
         }
     }
 
-    public String getGameStatus() {
+    public String getGameStatus()
+    {
         return ValidMovesString();
     }
+
 
     public String getBoardStatus() {
         String boardStatus = "";
@@ -126,7 +133,7 @@ public class Chess implements Game {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] == null) {
                     validMovesStringBuilder += "N";
-                } else if (validMove[row][col].equals("B")) //detta ska vara blå men vet inte om klienten kan veta skillnaden mellan dennas string B och boardStatus B
+                } else if (validMove[row][col].equals("B"))
                 {
                     validMovesStringBuilder += "B";
                 } else if (validMove[row][col].equals("R")) {
@@ -134,18 +141,48 @@ public class Chess implements Game {
                 } else if (validMove[row][col].equals("G")) {
                     validMovesStringBuilder += "G";
                 }
+                else if (validMove[row][col].equals("L"))
+                {
+                    validMovesStringBuilder += "L";
+                }
+                else if (validMove[row][col].equals("Y"))
+                {
+                    validMovesStringBuilder += "Y";
+                }
+                else if (validMove[row][col].equals("O"))
+                {
+                    validMovesStringBuilder += "O";
+                }
+                else if (validMove[row][col].equals("P"))
+                {
+                    validMovesStringBuilder += "P";
+                }
             }
         }
         return validMovesStringBuilder;
     }
 
     @Override
-    public boolean placeTile(int row, int col) {
+    public boolean placeTile(int row, int col)
+    {
+        if (promotionMode)
+        {
+            Piece newPiece = bondeChangesPiece(row, col);
+
+            if (newPiece != null)
+            {
+                board[promotionRow][promotionCol] = newPiece;
+                promotionMode = false;
+                clearValidMoves();
+                selectedRow = -1;
+                selectedCol = -1;
+                endTurn();
+            }
+            return true;
+        }
 
         if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
-            if (checkIfKingChecked(currentPlayer)) {
-                System.out.println("kungen är i schack");
-            }
+            checkIfKingChecked(currentPlayer);
 
             clearValidMoves();
             selectedRow = row;
@@ -160,8 +197,7 @@ public class Chess implements Game {
         }
 
         if (selectedRow != -1 && selectedCol != -1 &&
-                (validMove[row][col].equals("G") || validMove[row][col].equals("R")))
-        {
+                (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
 
             board[selectedRow][selectedCol].setMoved();
             int fromRow = selectedRow;
@@ -189,23 +225,29 @@ public class Chess implements Game {
 
             board[row][col] = movingPiece;
             board[fromRow][fromCol] = emptySpace;
-            clearValidMoves();
+            if (movingPiece.getPiece() == PieceType.BONDE &&
+                    (row == 0 || row == 7))
+            {
+                promotionMode = true;
 
+                promotionRow = row;
+                promotionCol = col;
+
+                clearValidMoves();
+
+                markChangeBondeValid();
+
+                return true;
+            }
+
+            clearValidMoves();
             clearEnPassant();
             registerEnPassant(fromRow, fromCol, row, col);
 
-            for (int col1 = 0; col1 < board.length; col1++)
-            {
-                if (board[7][col1].getOwner().equals(Player.WHITE) && board[7][col1].getPiece().equals(PieceType.BONDE))
-                {
-                    board[7][row] = bondeChangesPiece();
-                }
-            }
 
 
             selectedRow = -1;
             selectedCol = -1;
-
 
             endTurn();
             return true;
@@ -247,27 +289,27 @@ public class Chess implements Game {
                 }
             }
             if (board[row][col].getOwner().equals(Player.BLACK)) {
-                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner())) 
+                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner()))
                 {
                     if (!wouldLeaveKingInCheck(row, col, row - 1, col - 1))
                     {
                         markIfValid(row - 1, col - 1);
                     }
                 }
-                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner())) 
+                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner()))
                 {
                     if (!wouldLeaveKingInCheck(row, col, row - 1, col + 1))
                     {
-                        markIfValid(row - 1, col + 1);  
+                        markIfValid(row - 1, col + 1);
                     }
                 }
-                if (row - 1 < 8 && isEmpty(row - 1, col)) 
+                if (row - 1 < 8 && isEmpty(row - 1, col))
                 {
                     if (!wouldLeaveKingInCheck(row, col, row - 1, col))
                     {
-                        markIfValid(row - 1, col);   
+                        markIfValid(row - 1, col);
                     }
-                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) 
+                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col))
                     {
                         if (!wouldLeaveKingInCheck(row, col, row - 2, col))
                         {
@@ -399,11 +441,11 @@ public class Chess implements Game {
                     markIfValid(newRow, newCol);
                 }
                 if (!board[row][col].getisMoved() &&
-                !board[row][col - 3].getisMoved() &&
-                board[row][col - 3].getPiece().equals(PieceType.TORN) &&
-                isEmpty(row, col - 2) &&
-                isEmpty(row, col - 1) &&
-                !checkIfKingChecked(currentPlayer))
+                        !board[row][col - 3].getisMoved() &&
+                        board[row][col - 3].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col - 2) &&
+                        isEmpty(row, col - 1) &&
+                        !checkIfKingChecked(currentPlayer))
                 {
                     int newCol2 = col - 2;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
@@ -412,12 +454,12 @@ public class Chess implements Game {
                     }
                 }
                 if (!board[row][col].getisMoved() &&
-                !board[row][col + 4].getisMoved() &&
-                board[row][col + 4].getPiece().equals(PieceType.TORN) &&
-                isEmpty(row, col + 1) &&
-                isEmpty(row, col + 2) &&
-                isEmpty(row, col + 3) &&
-                !checkIfKingChecked(currentPlayer))
+                        !board[row][col + 4].getisMoved() &&
+                        board[row][col + 4].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col + 1) &&
+                        isEmpty(row, col + 2) &&
+                        isEmpty(row, col + 3) &&
+                        !checkIfKingChecked(currentPlayer))
                 {
                     int newCol2 = col + 3;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
@@ -463,7 +505,7 @@ public class Chess implements Game {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] != null) {
-                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R")) {
+                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R") || validMove[row][col].equals("L") || validMove[row][col].equals("Y") || validMove[row][col].equals("O") || validMove[row][col].equals("P")) {
                         validMove[row][col] = null;
                     }
                 }
@@ -546,8 +588,7 @@ public class Chess implements Game {
 
             if (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
                 Piece piece = board[row][col];
-                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST))
-                {
+                if (piece != null && piece.getOwner().equals(enemyPlayer) && piece.getPiece().equals(PieceType.HÄST)) {
                     return true;
                 }
             }
@@ -806,8 +847,7 @@ public class Chess implements Game {
             board[capturedPawnRow][toCol] = emptySpace;
         }
 
-        private void markEnPassantIfValid ( int row, int col, int direction)
-        {
+        private void markEnPassantIfValid ( int row, int col, int direction){
             if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
                 return;
             }
@@ -825,30 +865,40 @@ public class Chess implements Game {
             }
         }
 
-        public Piece bondeChangesPiece()
-        {
-            System.out.println("1. Torn, 2. Löpare, 3. Häst, 4. Drottning");
-            Scanner input = new Scanner(System.in);
-            int number = input.nextInt();
+    public Piece bondeChangesPiece(int selectedRow, int selectedCol)
+    {
+        System.out.println("Gul: Torn, Lila: Löpare, Orange: Häst, Rosa: Drottning");
 
-            if (number == 1)
-            {
-                return new Piece(currentPlayer, PieceType.TORN);
-            }
-            else if (number == 2)
-            {
-                return new Piece(currentPlayer, PieceType.LÖPARE);
-            }
-            else if (number == 3)
-            {
-                return new Piece(currentPlayer, PieceType.HÄST);
-            }
-            else if (number == 4)
-            {
-                return new Piece(currentPlayer, PieceType.DROTTNING);
-            }
-            return null;
+        if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("Y"))
+        {
+            return new Piece(currentPlayer, PieceType.TORN);
         }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("L"))
+        {
+            return new Piece(currentPlayer, PieceType.LÖPARE);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("O"))
+        {
+            return new Piece(currentPlayer, PieceType.HÄST);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("P"))
+        {
+            return new Piece(currentPlayer, PieceType.DROTTNING);
+        }
+        return null;
     }
+
+    public void markChangeBondeValid()
+    {
+        validMove[3][2] = "L";
+        validMove[4][2] = "L";
+        validMove[3][3] = "Y";
+        validMove[4][3] = "Y";
+        validMove[3][4] = "O";
+        validMove[4][4] = "O";
+        validMove[3][5] = "P";
+        validMove[4][5] = "P";
+    }
+}
 
 
