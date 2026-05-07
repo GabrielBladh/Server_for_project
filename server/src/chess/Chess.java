@@ -1,6 +1,9 @@
 package chess;
 import Game.Game;
 
+import java.util.Objects;
+import java.util.Scanner;
+
 public class Chess implements Game {
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
@@ -12,8 +15,11 @@ public class Chess implements Game {
     private int enPassantRow = -1; // Från din kompis
     private int enPassantCol = -1; // Från din kompis
     private Player enPassantOwner = Player.NONE; // Från din kompis
-
     private String[][] validMove = new String[8][8];
+    private boolean promotionMode = false;
+    private int promotionRow = -1;
+    private int promotionCol = -1;
+
     int[][] hästMoves = {
             {2, 1}, {2, -1},
             {-2, 1}, {-2, -1},
@@ -78,9 +84,11 @@ public class Chess implements Game {
         }
     }
 
-    public String getGameStatus() {
+    public String getGameStatus()
+    {
         return ValidMovesString();
     }
+
 
     public String getBoardStatus() {
         String boardStatus = "";
@@ -125,7 +133,7 @@ public class Chess implements Game {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] == null) {
                     validMovesStringBuilder += "N";
-                } else if (validMove[row][col].equals("B")) //detta ska vara blå men vet inte om klienten kan veta skillnaden mellan dennas string B och boardStatus B
+                } else if (validMove[row][col].equals("B"))
                 {
                     validMovesStringBuilder += "B";
                 } else if (validMove[row][col].equals("R")) {
@@ -133,18 +141,48 @@ public class Chess implements Game {
                 } else if (validMove[row][col].equals("G")) {
                     validMovesStringBuilder += "G";
                 }
+                else if (validMove[row][col].equals("L"))
+                {
+                    validMovesStringBuilder += "L";
+                }
+                else if (validMove[row][col].equals("Y"))
+                {
+                    validMovesStringBuilder += "Y";
+                }
+                else if (validMove[row][col].equals("O"))
+                {
+                    validMovesStringBuilder += "O";
+                }
+                else if (validMove[row][col].equals("P"))
+                {
+                    validMovesStringBuilder += "P";
+                }
             }
         }
         return validMovesStringBuilder;
     }
 
     @Override
-    public boolean placeTile(int row, int col) {
+    public boolean placeTile(int row, int col)
+    {
+        if (promotionMode)
+        {
+            Piece newPiece = bondeChangesPiece(row, col);
+
+            if (newPiece != null)
+            {
+                board[promotionRow][promotionCol] = newPiece;
+                promotionMode = false;
+                clearValidMoves();
+                selectedRow = -1;
+                selectedCol = -1;
+                endTurn();
+            }
+            return true;
+        }
 
         if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
-            if (checkIfKingChecked(currentPlayer)) {
-                System.out.println("kungen är i schack");
-            }
+            checkIfKingChecked(currentPlayer);
 
             clearValidMoves();
             selectedRow = row;
@@ -187,15 +225,29 @@ public class Chess implements Game {
 
             board[row][col] = movingPiece;
             board[fromRow][fromCol] = emptySpace;
-            clearValidMoves();
+            if (movingPiece.getPiece() == PieceType.BONDE &&
+                    (row == 0 || row == 7))
+            {
+                promotionMode = true;
 
+                promotionRow = row;
+                promotionCol = col;
+
+                clearValidMoves();
+
+                markChangeBondeValid();
+
+                return true;
+            }
+
+            clearValidMoves();
             clearEnPassant();
             registerEnPassant(fromRow, fromCol, row, col);
 
 
+
             selectedRow = -1;
             selectedCol = -1;
-
 
             endTurn();
             return true;
@@ -357,7 +409,7 @@ public class Chess implements Game {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] != null) {
-                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R")) {
+                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R") || validMove[row][col].equals("L") || validMove[row][col].equals("Y") || validMove[row][col].equals("O") || validMove[row][col].equals("P")) {
                         validMove[row][col] = null;
                     }
                 }
@@ -696,6 +748,41 @@ public class Chess implements Game {
                 validMove[row + direction][col + 1] = "R";
             }
         }
+
+    public Piece bondeChangesPiece(int selectedRow, int selectedCol)
+    {
+        System.out.println("Gul: Torn, Lila: Löpare, Orange: Häst, Rosa: Drottning");
+
+        if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("Y"))
+        {
+            return new Piece(currentPlayer, PieceType.TORN);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("L"))
+        {
+            return new Piece(currentPlayer, PieceType.LÖPARE);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("O"))
+        {
+            return new Piece(currentPlayer, PieceType.HÄST);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("P"))
+        {
+            return new Piece(currentPlayer, PieceType.DROTTNING);
+        }
+        return null;
     }
+
+    public void markChangeBondeValid()
+    {
+        validMove[3][2] = "L";
+        validMove[4][2] = "L";
+        validMove[3][3] = "Y";
+        validMove[4][3] = "Y";
+        validMove[3][4] = "O";
+        validMove[4][4] = "O";
+        validMove[3][5] = "P";
+        validMove[4][5] = "P";
+    }
+}
 
 
