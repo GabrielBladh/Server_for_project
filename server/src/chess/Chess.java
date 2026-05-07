@@ -1,5 +1,6 @@
 package chess;
 import Game.Game;
+import java.util.Scanner;
 
 public class Chess implements Game {
     private boolean AIgame = false; // Från dig
@@ -192,6 +193,14 @@ public class Chess implements Game {
 
             clearEnPassant();
             registerEnPassant(fromRow, fromCol, row, col);
+
+            for (int col1 = 0; col1 < board.length; col1++)
+            {
+                if (board[7][col1].getOwner().equals(Player.WHITE) && board[7][col1].getPiece().equals(PieceType.BONDE))
+                {
+                    board[7][row] = bondeChangesPiece();
+                }
+            }
 
 
             selectedRow = -1;
@@ -797,7 +806,8 @@ public class Chess implements Game {
             board[capturedPawnRow][toCol] = emptySpace;
         }
 
-        private void markEnPassantIfValid ( int row, int col, int direction){
+        private void markEnPassantIfValid ( int row, int col, int direction)
+        {
             if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
                 return;
             }
@@ -813,6 +823,31 @@ public class Chess implements Game {
                     col + 1 == enPassantCol) {
                 validMove[row + direction][col + 1] = "R";
             }
+        }
+
+        public Piece bondeChangesPiece()
+        {
+            System.out.println("1. Torn, 2. Löpare, 3. Häst, 4. Drottning");
+            Scanner input = new Scanner(System.in);
+            int number = input.nextInt();
+
+            if (number == 1)
+            {
+                return new Piece(currentPlayer, PieceType.TORN);
+            }
+            else if (number == 2)
+            {
+                return new Piece(currentPlayer, PieceType.LÖPARE);
+            }
+            else if (number == 3)
+            {
+                return new Piece(currentPlayer, PieceType.HÄST);
+            }
+            else if (number == 4)
+            {
+                return new Piece(currentPlayer, PieceType.DROTTNING);
+            }
+            return null;
         }
     }
 
