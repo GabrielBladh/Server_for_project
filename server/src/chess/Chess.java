@@ -538,6 +538,26 @@ public class Chess implements Game {
         return false;
     }
 
+    public boolean wouldLeaveKingInCheck(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8)
+        {
+            return true;
+        }
+        Piece movingPiece = board[fromRow][fromCol];
+        Piece captured = board[toRow][toCol];
+
+        board[toRow][toCol] = movingPiece;
+        board[fromRow][fromCol] = emptySpace;
+
+        boolean inCheck = checkIfKingChecked(movingPiece.getOwner());
+
+        board[fromRow][fromCol] = movingPiece;
+        board[toRow][toCol] = captured;
+
+        return inCheck;
+    }
+
     public void stopAI() {
         if (AIgame && engine != null) {
             System.out.println("Stänger ner Stockfish...");
