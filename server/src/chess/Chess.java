@@ -1,6 +1,9 @@
 package chess;
 import Game.Game;
 
+import java.util.Objects;
+import java.util.Scanner;
+
 public class Chess implements Game {
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
@@ -12,8 +15,11 @@ public class Chess implements Game {
     private int enPassantRow = -1; // Från din kompis
     private int enPassantCol = -1; // Från din kompis
     private Player enPassantOwner = Player.NONE; // Från din kompis
-
     private String[][] validMove = new String[8][8];
+    private boolean promotionMode = false;
+    private int promotionRow = -1;
+    private int promotionCol = -1;
+
     int[][] hästMoves = {
             {2, 1}, {2, -1},
             {-2, 1}, {-2, -1},
@@ -78,9 +84,11 @@ public class Chess implements Game {
         }
     }
 
-    public String getGameStatus() {
+    public String getGameStatus()
+    {
         return ValidMovesString();
     }
+
 
     public String getBoardStatus() {
         String boardStatus = "";
@@ -125,7 +133,7 @@ public class Chess implements Game {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] == null) {
                     validMovesStringBuilder += "N";
-                } else if (validMove[row][col].equals("B")) //detta ska vara blå men vet inte om klienten kan veta skillnaden mellan dennas string B och boardStatus B
+                } else if (validMove[row][col].equals("B"))
                 {
                     validMovesStringBuilder += "B";
                 } else if (validMove[row][col].equals("R")) {
@@ -133,18 +141,48 @@ public class Chess implements Game {
                 } else if (validMove[row][col].equals("G")) {
                     validMovesStringBuilder += "G";
                 }
+                else if (validMove[row][col].equals("L"))
+                {
+                    validMovesStringBuilder += "L";
+                }
+                else if (validMove[row][col].equals("Y"))
+                {
+                    validMovesStringBuilder += "Y";
+                }
+                else if (validMove[row][col].equals("O"))
+                {
+                    validMovesStringBuilder += "O";
+                }
+                else if (validMove[row][col].equals("P"))
+                {
+                    validMovesStringBuilder += "P";
+                }
             }
         }
         return validMovesStringBuilder;
     }
 
     @Override
-    public boolean placeTile(int row, int col) {
+    public boolean placeTile(int row, int col)
+    {
+        if (promotionMode)
+        {
+            Piece newPiece = bondeChangesPiece(row, col);
+
+            if (newPiece != null)
+            {
+                board[promotionRow][promotionCol] = newPiece;
+                promotionMode = false;
+                clearValidMoves();
+                selectedRow = -1;
+                selectedCol = -1;
+                endTurn();
+            }
+            return true;
+        }
 
         if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
-            if (checkIfKingChecked(currentPlayer)) {
-                System.out.println("kungen är i schack");
-            }
+            checkIfKingChecked(currentPlayer);
 
             clearValidMoves();
             selectedRow = row;
@@ -187,15 +225,29 @@ public class Chess implements Game {
 
             board[row][col] = movingPiece;
             board[fromRow][fromCol] = emptySpace;
-            clearValidMoves();
+            if (movingPiece.getPiece() == PieceType.BONDE &&
+                    (row == 0 || row == 7))
+            {
+                promotionMode = true;
 
+                promotionRow = row;
+                promotionCol = col;
+
+                clearValidMoves();
+
+                markChangeBondeValid();
+
+                return true;
+            }
+
+            clearValidMoves();
             clearEnPassant();
             registerEnPassant(fromRow, fromCol, row, col);
 
 
+
             selectedRow = -1;
             selectedCol = -1;
-
 
             endTurn();
             return true;
@@ -207,63 +259,120 @@ public class Chess implements Game {
         //Hur bonde kan röra sig
         if (board[row][col].getPiece() == PieceType.BONDE) {
             if (Player.WHITE.equals(board[row][col].getOwner())) {
-                if (row + 1 < 8 && col + 1 < 8 && Player.BLACK.equals(board[row + 1][col + 1].getOwner())) {
-                    markIfValid(row + 1, col + 1);
+                if (row + 1 < 8 && col + 1 < 8 && Player.BLACK.equals(board[row + 1][col + 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col + 1))
+                    {
+                        markIfValid(row + 1, col + 1);
+                    }
                 }
-                if (row + 1 < 8 && col - 1 >= 0 && Player.BLACK.equals(board[row + 1][col - 1].getOwner())) {
-                    markIfValid(row + 1, col - 1);
+                if (row + 1 < 8 && col - 1 >= 0 && Player.BLACK.equals(board[row + 1][col - 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col - 1))
+                    {
+                        markIfValid(row + 1, col - 1);
+                    }
                 }
-                if (row + 1 < 8 && isEmpty(row + 1, col)) {
-                    markIfValid(row + 1, col);
-
-                    if (!board[row][col].getisMoved() && row + 2 < 8 && isEmpty(row + 2, col)) {
-                        markIfValid(row + 2, col);
+                if (row + 1 < 8 && isEmpty(row + 1, col))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row + 1, col))
+                    {
+                        markIfValid(row + 1, col);
+                    }
+                    if (!board[row][col].getisMoved() && row + 2 < 8 && isEmpty(row + 2, col))
+                    {
+                        if (!wouldLeaveKingInCheck(row, col, row + 2, col))
+                        {
+                            markIfValid(row + 2, col);
+                        }
                     }
                 }
             }
             if (board[row][col].getOwner().equals(Player.BLACK)) {
-                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner())) {
-                    markIfValid(row - 1, col - 1);
+                if (row - 1 < 8 && col - 1 >= 0 && Player.WHITE.equals(board[row - 1][col - 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col - 1))
+                    {
+                        markIfValid(row - 1, col - 1);
+                    }
                 }
-                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner())) {
-                    markIfValid(row - 1, col + 1);
+                if (row - 1 < 8 && col + 1 < 8 && Player.WHITE.equals(board[row - 1][col + 1].getOwner()))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col + 1))
+                    {
+                        markIfValid(row - 1, col + 1);
+                    }
                 }
-                if (row - 1 < 8 && isEmpty(row - 1, col)) {
-                    markIfValid(row - 1, col);
-                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col)) {
-                        markIfValid(row - 2, col);
+                if (row - 1 < 8 && isEmpty(row - 1, col))
+                {
+                    if (!wouldLeaveKingInCheck(row, col, row - 1, col))
+                    {
+                        markIfValid(row - 1, col);
+                    }
+                    if (!board[row][col].getisMoved() && row - 2 >= 0 && isEmpty(row - 2, col))
+                    {
+                        if (!wouldLeaveKingInCheck(row, col, row - 2, col))
+                        {
+                            markIfValid(row - 2, col);
+                        }
                     }
                 }
             }
-            if (board[row][col].getOwner() == Player.WHITE && row == 4) {
-                markEnPassantIfValid(row, col, +1);
+            if (board[row][col].getOwner() == Player.WHITE && row == 4)
+            {
+                if (!wouldLeaveKingInCheck(row, col, row, col + 1))
+                {
+                    markEnPassantIfValid(row, col, +1);
+                }
             }
 
-            if (board[row][col].getOwner() == Player.BLACK && row == 3) {
-                markEnPassantIfValid(row, col, -1);
+            if (board[row][col].getOwner() == Player.BLACK && row == 3)
+            {
+                if (!wouldLeaveKingInCheck(row, col, row, col - 1))
+                {
+                    markEnPassantIfValid(row, col, -1);
+                }
             }
         }
 
         //Hur häst kan röra sig
-        else if (board[row][col].getPiece() == PieceType.HÄST) {
-            for (int i = 0; i < hästMoves.length; i++) {
+        else if (board[row][col].getPiece() == PieceType.HÄST)
+        {
+            for (int i = 0; i < hästMoves.length; i++)
+            {
                 int newRow = row + hästMoves[i][0];
                 int newCol = col + hästMoves[i][1];
 
-                markIfValid(newRow, newCol);
+
+                if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                {
+                    markIfValid(newRow, newCol);
+                }
             }
         }
 
         //Hur torn kan röra sig
-        else if (board[row][col].getPiece() == PieceType.TORN) {
-            for (int i = 0; i < tornMoves.length; i++) {
+        else if (board[row][col].getPiece() == PieceType.TORN)
+        {
+            for (int i = 0; i < tornMoves.length; i++)
+            {
                 int dRow = tornMoves[i][0];
                 int dCol = tornMoves[i][1];
-                for (int step = 1; step < 8; step++) {
+                for (int step = 1; step < 8; step++)
+                {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
-                    if (!markIfValidSliding(newRow, newCol)) {
+
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -275,12 +384,22 @@ public class Chess implements Game {
                 int dRow = löpareMoves[i][0];
                 int dCol = löpareMoves[i][1];
 
-                for (int step = 1; step < 8; step++) {
+
+                for (int step = 1; step < 8; step++)
+                {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
 
-                    if (!markIfValidSliding(newRow, newCol)) {
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -296,8 +415,16 @@ public class Chess implements Game {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
 
-                    if (!markIfValidSliding(newRow, newCol)) {
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+                    {
                         break;
+                    }
+                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                    {
+                        if (!markIfValidSliding(newRow, newCol))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -309,15 +436,36 @@ public class Chess implements Game {
                 int newRow = row + kungMoves[i][0];
                 int newCol = col + kungMoves[i][1];
 
-
-                markIfValid(newRow, newCol);
-                if (!board[row][col].getisMoved() && !board[row][col - 3].getisMoved() && board[row][col - 3].getPiece().equals(PieceType.TORN) && isEmpty(row, col - 2) && isEmpty(row, col - 1)) {
-                    int newCol2 = col - 2;
-                    markIfValid(row, newCol2);
+                if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
+                {
+                    markIfValid(newRow, newCol);
                 }
-                if (!board[row][col].getisMoved() && !board[row][col + 4].getisMoved() && board[row][col + 4].getPiece().equals(PieceType.TORN) && isEmpty(row, col + 1) && isEmpty(row, col + 2) && isEmpty(row, col + 3)) {
+                if (!board[row][col].getisMoved() &&
+                        !board[row][col - 3].getisMoved() &&
+                        board[row][col - 3].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col - 2) &&
+                        isEmpty(row, col - 1) &&
+                        !checkIfKingChecked(currentPlayer))
+                {
+                    int newCol2 = col - 2;
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
+                        markIfValid(row, newCol2);
+                    }
+                }
+                if (!board[row][col].getisMoved() &&
+                        !board[row][col + 4].getisMoved() &&
+                        board[row][col + 4].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col + 1) &&
+                        isEmpty(row, col + 2) &&
+                        isEmpty(row, col + 3) &&
+                        !checkIfKingChecked(currentPlayer))
+                {
                     int newCol2 = col + 3;
-                    markIfValid(row, newCol2);
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
+                        markIfValid(row, newCol2);
+                    }
                 }
             }
         }
@@ -357,7 +505,7 @@ public class Chess implements Game {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (validMove[row][col] != null) {
-                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R")) {
+                    if (validMove[row][col].equals("G") || validMove[row][col].equals("B") || validMove[row][col].equals("R") || validMove[row][col].equals("L") || validMove[row][col].equals("Y") || validMove[row][col].equals("O") || validMove[row][col].equals("P")) {
                         validMove[row][col] = null;
                     }
                 }
@@ -484,6 +632,26 @@ public class Chess implements Game {
             }
         }
         return false;
+    }
+
+    public boolean wouldLeaveKingInCheck(int fromRow, int fromCol, int toRow, int toCol)
+    {
+        if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8)
+        {
+            return true;
+        }
+        Piece movingPiece = board[fromRow][fromCol];
+        Piece captured = board[toRow][toCol];
+
+        board[toRow][toCol] = movingPiece;
+        board[fromRow][fromCol] = emptySpace;
+
+        boolean inCheck = checkIfKingChecked(movingPiece.getOwner());
+
+        board[fromRow][fromCol] = movingPiece;
+        board[toRow][toCol] = captured;
+
+        return inCheck;
     }
 
     public void stopAI() {
@@ -696,6 +864,41 @@ public class Chess implements Game {
                 validMove[row + direction][col + 1] = "R";
             }
         }
+
+    public Piece bondeChangesPiece(int selectedRow, int selectedCol)
+    {
+        System.out.println("Gul: Torn, Lila: Löpare, Orange: Häst, Rosa: Drottning");
+
+        if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("Y"))
+        {
+            return new Piece(currentPlayer, PieceType.TORN);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("L"))
+        {
+            return new Piece(currentPlayer, PieceType.LÖPARE);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("O"))
+        {
+            return new Piece(currentPlayer, PieceType.HÄST);
+        }
+        else if (validMove[selectedRow][selectedCol] != null && validMove[selectedRow][selectedCol].equals("P"))
+        {
+            return new Piece(currentPlayer, PieceType.DROTTNING);
+        }
+        return null;
     }
+
+    public void markChangeBondeValid()
+    {
+        validMove[3][2] = "L";
+        validMove[4][2] = "L";
+        validMove[3][3] = "Y";
+        validMove[4][3] = "Y";
+        validMove[3][4] = "O";
+        validMove[4][4] = "O";
+        validMove[3][5] = "P";
+        validMove[4][5] = "P";
+    }
+}
 
 
