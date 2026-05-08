@@ -794,25 +794,29 @@ public class Chess implements Game {
     public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        // 1. Hämta pjäsen som Stockfish vill flytta
-        Piece movingPiece = board[fromRow][fromCol];
+        clearValidMoves();
 
-        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
+        validMove[fromRow][fromCol] = "B"; // Visar rutan pjäsen STÅR PÅ (Blå)
+        validMove[toRow][toCol] = "R";     // Visar rutan pjäsen SKA TILL (Röd)
+
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            System.out.println("AI paus avbruten: " + e.getMessage());
+        }
+
+        Piece movingPiece = board[fromRow][fromCol];
         movingPiece.setMoved();
 
-        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
         board[toRow][toCol] = movingPiece;
-
-        // 4. Töm den gamla rutan där pjäsen stod innan
         board[fromRow][fromCol] = emptySpace;
 
-        // 5. Städa upp brädet och byt tur
-        clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
+
+
         endTurn();
     }
-
         private void clearEnPassant () {
             enPassantRow = -1;
             enPassantCol = -1;
