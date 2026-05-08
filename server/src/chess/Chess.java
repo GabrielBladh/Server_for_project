@@ -440,12 +440,18 @@ public class Chess implements Game {
                 {
                     markIfValid(newRow, newCol);
                 }
+                Player enemyPlayer = (currentPlayer == Player.WHITE)
+                        ? Player.BLACK
+                        : Player.WHITE;
+                //Castling
                 if (!board[row][col].getisMoved() &&
                         !board[row][col - 3].getisMoved() &&
                         board[row][col - 3].getPiece().equals(PieceType.TORN) &&
                         isEmpty(row, col - 2) &&
                         isEmpty(row, col - 1) &&
-                        !checkIfKingChecked(currentPlayer))
+                        !checkIfKingChecked(currentPlayer) &&
+                        !isSquareAttacked(row, col -2, enemyPlayer) &&
+                        !isSquareAttacked(row, col -1, enemyPlayer))
                 {
                     int newCol2 = col - 2;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
@@ -459,7 +465,10 @@ public class Chess implements Game {
                         isEmpty(row, col + 1) &&
                         isEmpty(row, col + 2) &&
                         isEmpty(row, col + 3) &&
-                        !checkIfKingChecked(currentPlayer))
+                        !checkIfKingChecked(currentPlayer) &&
+                        !isSquareAttacked(row, col + 3, enemyPlayer) &&
+                        !isSquareAttacked(row, col + 2, enemyPlayer) &&
+                        !isSquareAttacked(row, col + 1, enemyPlayer))
                 {
                     int newCol2 = col + 3;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
