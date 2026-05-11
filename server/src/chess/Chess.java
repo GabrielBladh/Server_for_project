@@ -212,7 +212,7 @@ public class Chess implements Game {
                     movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
                 if (col > selectedCol) {
                     Piece rook = board[selectedRow][selectedCol + 4];
-                    board[selectedRow][selectedCol + 2] = rook;
+                    board[selectedRow][selectedCol + 1] = rook;
                     board[selectedRow][selectedCol + 4] = emptySpace;
                     rook.setMoved();
                 } else {
@@ -367,12 +367,24 @@ public class Chess implements Game {
                     {
                         break;
                     }
+
+                    Piece target = board[newRow][newCol];
+
+                    if (target != null && target.getOwner().equals(currentPlayer))
+                    {
+                        break;
+                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
+                    }
+
+                    if (target != null && target.getPiece() != PieceType.NONE)
+                    {
+                        break;
                     }
                 }
             }
@@ -394,12 +406,23 @@ public class Chess implements Game {
                     {
                         break;
                     }
+                    Piece target = board[newRow][newCol];
+
+                    if (target != null && target.getOwner().equals(currentPlayer))
+                    {
+                        break;
+                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
+                    }
+
+                    if (target != null && target.getPiece() != PieceType.NONE)
+                    {
+                        break;
                     }
                 }
             }
@@ -419,12 +442,24 @@ public class Chess implements Game {
                     {
                         break;
                     }
+
+                    Piece target = board[newRow][newCol];
+
+                    if (target != null && target.getOwner().equals(currentPlayer))
+                    {
+                        break;
+                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
+                    }
+
+                    if (target != null && target.getPiece() != PieceType.NONE)
+                    {
+                        break;
                     }
                 }
             }
@@ -470,7 +505,7 @@ public class Chess implements Game {
                         !isSquareAttacked(row, col + 2, enemyPlayer) &&
                         !isSquareAttacked(row, col + 1, enemyPlayer))
                 {
-                    int newCol2 = col + 3;
+                    int newCol2 = col + 2;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
                     {
                         markIfValid(row, newCol2);
@@ -909,5 +944,3 @@ public class Chess implements Game {
         validMove[4][5] = "P";
     }
 }
-
-
