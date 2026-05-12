@@ -310,4 +310,24 @@ public class GameModel implements Game {
         }
         return status.toString();
     }
+
+    @Override
+    public void setGameStatus(String gameStatus) {
+
+    }
+
+    @Override
+    public void setBoardStatus(String boardStatus) {
+
+    }
+
+    @Override
+    public void setTurn(String turn) {
+
+    }
+
+    @Override
+    public void setGameEnd(String gameEnd) {
+
+    }
 }

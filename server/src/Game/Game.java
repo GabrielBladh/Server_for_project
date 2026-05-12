@@ -8,4 +8,9 @@ public interface Game {
     String getGameEnd();
     boolean isGameEnded();
     String getBoardStatus();
+
+   void setGameStatus(String gameStatus);
+   void setBoardStatus(String boardStatus);
+   void setTurn(String turn);
+   void setGameEnd(String gameEnd);
 }

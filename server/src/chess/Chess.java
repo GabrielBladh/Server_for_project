@@ -126,6 +126,26 @@ public class Chess implements Game {
         return boardStatus;
     }
 
+    @Override
+    public void setGameStatus(String gameStatus) {
+
+    }
+
+    @Override
+    public void setBoardStatus(String boardStatus) {
+
+    }
+
+    @Override
+    public void setTurn(String turn) {
+
+    }
+
+    @Override
+    public void setGameEnd(String gameEnd) {
+
+    }
+
     public String ValidMovesString() {
         String validMovesStringBuilder = "";
 
