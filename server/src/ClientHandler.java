@@ -102,35 +102,42 @@ public class ClientHandler implements Runnable {
                     out.flush();
                 }
                 else if (command.equals("press")) {
-                    command = in.readLine();
-                    String[] commands = command.split(":");
-                    int x_värde = Integer.parseInt(commands[0]);
-                    int y_värde = Integer.parseInt(commands[1]);
-                    Game currentGame = controller.getGame();
-
-                    if (currentGame instanceof Checkers) {
-                        if (((Checkers) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: Checkers AI tänker!");
-                            continue;
-                        }
-                    } else if (currentGame instanceof TicTacToe) {
-                        if (((TicTacToe) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: TicTacToe AI tänker!");
-                            continue;
-                        }
-                    } else if (currentGame instanceof Chess) { // <-- NYTT FÖR SCHACK!
-                        if (((Chess) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: Stockfish tänker!");
-                            continue;
-                        }
+                    command = in.readLine(); // Läser förhoppningsvis "3:4"
+                    if (command == null || !command.contains(":")) {
+                        System.out.println("TCP Krock undviken! Förväntade koordinater, fick: " + command);
+                        continue;
                     }
 
-                    currentGame.placeTile(x_värde, y_värde);
-                    currentGame.placeTile(x_värde, y_värde);
-                    System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+                    try {
+                        String[] commands = command.split(":");
+                        int x_värde = Integer.parseInt(commands[0].trim());
+                        int y_värde = Integer.parseInt(commands[1].trim());
 
-                }
-            }
+                        Game currentGame = controller.getGame();
+
+                        if (currentGame instanceof Checkers) {
+                            if (((Checkers) currentGame).isAITurn()) {
+                                continue;
+                            }
+                        } else if (currentGame instanceof TicTacToe) {
+                            if (((TicTacToe) currentGame).isAITurn()) {
+                                continue;
+                            }
+                        } else if (currentGame instanceof Chess) {
+                            if (((Chess) currentGame).isAITurn()) {
+                                continue;
+                            }
+                        }
+
+                        currentGame.placeTile(x_värde, y_värde);
+                        currentGame.placeTile(x_värde, y_värde);
+
+                        System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("Kunde inte läsa siffrorna: " + command);
+                    }
+                }            }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
