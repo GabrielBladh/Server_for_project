@@ -708,7 +708,7 @@ public class Chess implements Game {
 
     @Override
     public String getTurn() {
-        return "";
+        return currentPlayer.toString();
     }
 
     @Override
