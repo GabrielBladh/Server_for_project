@@ -56,8 +56,8 @@ public class Chess implements Game {
         board[0][0] = new Piece(Player.WHITE, PieceType.TORN);
         board[0][1] = new Piece(Player.WHITE, PieceType.HÄST);
         board[0][2] = new Piece(Player.WHITE, PieceType.LÖPARE);
-        board[0][3] = new Piece(Player.WHITE, PieceType.KUNG);
-        board[0][4] = new Piece(Player.WHITE, PieceType.DROTTNING);
+        board[0][3] = new Piece(Player.WHITE, PieceType.DROTTNING); // <-- SKA VARA INDEX 3 (d1)
+        board[0][4] = new Piece(Player.WHITE, PieceType.KUNG);      // <-- SKA VARA INDEX 4 (e1)
         board[0][5] = new Piece(Player.WHITE, PieceType.LÖPARE);
         board[0][6] = new Piece(Player.WHITE, PieceType.HÄST);
         board[0][7] = new Piece(Player.WHITE, PieceType.TORN);
@@ -68,8 +68,8 @@ public class Chess implements Game {
         board[7][0] = new Piece(Player.BLACK, PieceType.TORN);
         board[7][1] = new Piece(Player.BLACK, PieceType.HÄST);
         board[7][2] = new Piece(Player.BLACK, PieceType.LÖPARE);
-        board[7][3] = new Piece(Player.BLACK, PieceType.KUNG);
-        board[7][4] = new Piece(Player.BLACK, PieceType.DROTTNING);
+        board[7][3] = new Piece(Player.BLACK, PieceType.DROTTNING); // <-- SKA VARA INDEX 3 (d8)
+        board[7][4] = new Piece(Player.BLACK, PieceType.KUNG);      // <-- SKA VARA INDEX 4 (e8)
         board[7][5] = new Piece(Player.BLACK, PieceType.LÖPARE);
         board[7][6] = new Piece(Player.BLACK, PieceType.HÄST);
         board[7][7] = new Piece(Player.BLACK, PieceType.TORN);
@@ -208,17 +208,16 @@ public class Chess implements Game {
             }
 
             Piece movingPiece = board[fromRow][fromCol];
-            if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
-                    movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
+            if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2) {
                 if (col > selectedCol) {
-                    Piece rook = board[selectedRow][selectedCol + 4];
+                    Piece rook = board[selectedRow][selectedCol + 3];
                     board[selectedRow][selectedCol + 1] = rook;
-                    board[selectedRow][selectedCol + 4] = emptySpace;
+                    board[selectedRow][selectedCol + 3] = emptySpace;
                     rook.setMoved();
                 } else {
-                    Piece rook = board[selectedRow][selectedCol - 3];
+                    Piece rook = board[selectedRow][selectedCol - 4];
                     board[selectedRow][selectedCol - 1] = rook;
-                    board[selectedRow][selectedCol - 3] = emptySpace;
+                    board[selectedRow][selectedCol - 4] = emptySpace;
                     rook.setMoved();
                 }
             }
@@ -480,34 +479,34 @@ public class Chess implements Game {
                         : Player.WHITE;
                 //Castling
                 if (!board[row][col].getisMoved() &&
-                        !board[row][col - 3].getisMoved() &&
-                        board[row][col - 3].getPiece().equals(PieceType.TORN) &&
-                        isEmpty(row, col - 2) &&
-                        isEmpty(row, col - 1) &&
+                        col - 4 >= 0 &&
+                        !board[row][col - 4].getisMoved() &&
+                        board[row][col - 4].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col - 1) && // d-linjen tom
+                        isEmpty(row, col - 2) && // c-linjen tom
+                        isEmpty(row, col - 3) && // b-linjen tom
                         !checkIfKingChecked(currentPlayer) &&
-                        !isSquareAttacked(row, col -2, enemyPlayer) &&
-                        !isSquareAttacked(row, col -1, enemyPlayer))
+                        !isSquareAttacked(row, col - 1, enemyPlayer) &&
+                        !isSquareAttacked(row, col - 2, enemyPlayer))
                 {
                     int newCol2 = col - 2;
-                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
-                    {
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2)) {
                         markIfValid(row, newCol2);
                     }
                 }
+
                 if (!board[row][col].getisMoved() &&
-                        !board[row][col + 4].getisMoved() &&
-                        board[row][col + 4].getPiece().equals(PieceType.TORN) &&
-                        isEmpty(row, col + 1) &&
-                        isEmpty(row, col + 2) &&
-                        isEmpty(row, col + 3) &&
+                        col + 3 < 8 &&
+                        !board[row][col + 3].getisMoved() &&
+                        board[row][col + 3].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col + 1) && // f-linjen tom
+                        isEmpty(row, col + 2) && // g-linjen tom
                         !checkIfKingChecked(currentPlayer) &&
-                        !isSquareAttacked(row, col + 3, enemyPlayer) &&
-                        !isSquareAttacked(row, col + 2, enemyPlayer) &&
-                        !isSquareAttacked(row, col + 1, enemyPlayer))
+                        !isSquareAttacked(row, col + 1, enemyPlayer) &&
+                        !isSquareAttacked(row, col + 2, enemyPlayer))
                 {
                     int newCol2 = col + 2;
-                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
-                    {
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2)) {
                         markIfValid(row, newCol2);
                     }
                 }
@@ -795,9 +794,14 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
+
+            engine.sendCommand("uci");
+            // Aktivera begränsningen
+            engine.sendCommand("setoption name UCI_LimitStrength value true");
+            // Sätt Elo till lägsta möjliga (1320 är minimum i Stockfish)
+            engine.sendCommand("setoption name UCI_Elo value 1320");
         }
     }
-
     private void doComputerMove() {
         new Thread(() -> {
             try {
@@ -805,27 +809,23 @@ public class Chess implements Game {
                 String fen = getFEN();
                 System.out.println("AI läser brädet som: " + fen);
 
-                // Be Stockfish tänka (Tänker i 1.5 sekunder = 1500 millisekunder)
-                String bestMove = engine.getBestMove(fen, 1500);
+                String bestMove = engine.getBestMove(fen, 50);
                 System.out.println("Stockfish säger: " + bestMove);
 
                 // bestMove ser ut så här: "e2e4" eller "g8f6"
-                // Nu måste vi översätta detta till koordinater!
                 if (bestMove != null && bestMove.length() >= 4) {
 
-                    // Bokstäverna a-h är kolumnerna 0-7
+                    // bokstäverna a-h är kolumnerna 0-7
                     int fromCol = bestMove.charAt(0) - 'a';
                     int toCol = bestMove.charAt(2) - 'a';
 
-                    // Siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
+                    // siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
                     // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
                     // Genomför draget direkt på brädet!
                     System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
-
-                    // --- AI:ns egna händer (vi skapar denna om en sekund) ---
                     placeTileAI(fromRow, fromCol, toRow, toCol);
                 }
 
@@ -852,16 +852,43 @@ public class Chess implements Game {
         Piece movingPiece = board[fromRow][fromCol];
         movingPiece.setMoved();
 
+        // ----------------------------------------------------
+        // 1. KONTROLLERA OM AI:N GÖR ROCKAD
+        // ----------------------------------------------------
+        // Om Kungen hoppar 2 steg i sidled vet vi att det är en rockad.
+        if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(toCol - fromCol) == 2) {
+            if (toCol > fromCol) {
+                // Kort rockad (mot h-linjen)
+                Piece rook = board[fromRow][7];
+                board[fromRow][5] = rook;       // Flytta tornet in över kungen
+                board[fromRow][7] = emptySpace; // Töm gamla torn-rutan
+                rook.setMoved();
+            } else {
+                // Lång rockad (mot a-linjen)
+                Piece rook = board[fromRow][0];
+                board[fromRow][3] = rook;       // Flytta tornet in över kungen
+                board[fromRow][0] = emptySpace; // Töm gamla torn-rutan
+                rook.setMoved();
+            }
+        }
+
+        // ----------------------------------------------------
+        // 2. KONTROLLERA OM AI:N GÖR EN PASSANT
+        // ----------------------------------------------------
+        // Om en bonde går snett (byter kolumn) MEN landar på en tom ruta = En Passant!
+        if (movingPiece.getPiece() == PieceType.BONDE && fromCol != toCol && board[toRow][toCol].getPiece() == PieceType.NONE) {
+            board[fromRow][toCol] = emptySpace; // Ta bort bonden den "hoppade över"
+        }
+
+        // Genomför själva standard-draget som AI:n bad om
         board[toRow][toCol] = movingPiece;
         board[fromRow][fromCol] = emptySpace;
 
         selectedRow = -1;
         selectedCol = -1;
 
-
         endTurn();
-    }
-        private void clearEnPassant () {
+    }        private void clearEnPassant () {
             enPassantRow = -1;
             enPassantCol = -1;
 
