@@ -104,7 +104,7 @@ public class StockfishEngine {
             String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             System.out.println("Låter Stockfish tänka i 1 sekund...");
 
-            String bestMove = engine.getBestMove(startFEN, 1000);
+            String bestMove = engine.getBestMove(startFEN, 1500);
             System.out.println("👑 Bästa draget enligt Stockfish: " + bestMove);
 
             engine.stopEngine();

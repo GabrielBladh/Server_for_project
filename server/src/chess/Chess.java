@@ -19,6 +19,7 @@ public class Chess implements Game {
     private boolean promotionMode = false;
     private int promotionRow = -1;
     private int promotionCol = -1;
+    private boolean gameOver = false;
 
     int[][] hästMoves = {
             {2, 1}, {2, -1},
@@ -563,6 +564,18 @@ public class Chess implements Game {
             currentPlayer = Player.WHITE;
         }
 
+        if (!hasValidMoves(currentPlayer)) {
+            gameOver = true;
+
+            if (checkIfKingChecked(currentPlayer)) {
+                String vinnare = (currentPlayer == Player.WHITE) ? "Svart (AI)" : "Vit";
+                System.out.println("🏆 SCHACKMATT! " + vinnare + " vinner spelet!");
+            } else {
+                System.out.println("🤝 PATT! Spelet slutar oavgjort (Inga lagliga drag, men ingen schack).");
+            }
+            return;
+        }
+
         if (isAITurn()) {
             doComputerMove();
         }
@@ -714,10 +727,9 @@ public class Chess implements Game {
     public String getGameEnd() {
         return "";
     }
-
     @Override
     public boolean isGameEnded() {
-        return false;
+        return gameOver;
     }
 
     private boolean isEmpty(int row, int col) {
@@ -798,33 +810,30 @@ public class Chess implements Game {
             engine.sendCommand("uci");
             // Aktivera begränsningen
             engine.sendCommand("setoption name UCI_LimitStrength value true");
-            // Sätt Elo till lägsta möjliga (1320 är minimum i Stockfish)
-            engine.sendCommand("setoption name UCI_Elo value 1320");
+            // 1320 är minimum i Stockfish
+            engine.sendCommand("setoption name UCI_Elo value 3000");
         }
     }
     private void doComputerMove() {
         new Thread(() -> {
             try {
-                // Skapa FEN-strängen från det aktuella brädet
                 String fen = getFEN();
                 System.out.println("AI läser brädet som: " + fen);
 
                 String bestMove = engine.getBestMove(fen, 50);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                // bestMove ser ut så här: "e2e4" eller "g8f6"
-                if (bestMove != null && bestMove.length() >= 4) {
+                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
+                    System.out.println("🏆 SCHACKMATT! AI:n ger upp.");
+                    return;
+                }
 
-                    // bokstäverna a-h är kolumnerna 0-7
+                if (bestMove.length() >= 4) {
                     int fromCol = bestMove.charAt(0) - 'a';
                     int toCol = bestMove.charAt(2) - 'a';
-
-                    // siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
-                    // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    // Genomför draget direkt på brädet!
                     System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
                     placeTileAI(fromRow, fromCol, toRow, toCol);
                 }
@@ -834,7 +843,6 @@ public class Chess implements Game {
             }
         }).start();
     }
-
     public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
@@ -852,10 +860,7 @@ public class Chess implements Game {
         Piece movingPiece = board[fromRow][fromCol];
         movingPiece.setMoved();
 
-        // ----------------------------------------------------
-        // 1. KONTROLLERA OM AI:N GÖR ROCKAD
-        // ----------------------------------------------------
-        // Om Kungen hoppar 2 steg i sidled vet vi att det är en rockad.
+
         if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(toCol - fromCol) == 2) {
             if (toCol > fromCol) {
                 // Kort rockad (mot h-linjen)
@@ -872,15 +877,11 @@ public class Chess implements Game {
             }
         }
 
-        // ----------------------------------------------------
-        // 2. KONTROLLERA OM AI:N GÖR EN PASSANT
-        // ----------------------------------------------------
-        // Om en bonde går snett (byter kolumn) MEN landar på en tom ruta = En Passant!
+
         if (movingPiece.getPiece() == PieceType.BONDE && fromCol != toCol && board[toRow][toCol].getPiece() == PieceType.NONE) {
             board[fromRow][toCol] = emptySpace; // Ta bort bonden den "hoppade över"
         }
 
-        // Genomför själva standard-draget som AI:n bad om
         board[toRow][toCol] = movingPiece;
         board[fromRow][fromCol] = emptySpace;
 
@@ -973,5 +974,30 @@ public class Chess implements Game {
         validMove[4][4] = "O";
         validMove[3][5] = "P";
         validMove[4][5] = "P";
+    }
+    private boolean hasValidMoves(Player player) {
+        boolean hasMoves = false;
+
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (board[r][c].getOwner() == player) {
+                    clearValidMoves();
+                    checkMoves(r, c);
+
+                    for (int i = 0; i < 8; i++) {
+                        for (int j = 0; j < 8; j++) {
+                            if (validMove[i][j] != null && (validMove[i][j].equals("G") || validMove[i][j].equals("R"))) {
+                                hasMoves = true;
+                                break;
+                            }
+                        }
+                        if (hasMoves) break;
+                    }
+                }
+                if (hasMoves) break;
+            }
+        }
+        clearValidMoves();
+        return hasMoves;
     }
 }
