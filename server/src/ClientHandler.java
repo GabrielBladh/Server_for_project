@@ -27,6 +27,9 @@ public class ClientHandler implements Runnable {
                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
             while (true){
+                if (!socket.isConnected()){
+                    socket.close();
+                }
                 String command = in.readLine();
                 if (command == null){
                     System.out.println("Disconnected connection from " + socket.getInetAddress().getHostName());
@@ -70,8 +73,8 @@ public class ClientHandler implements Runnable {
                     System.out.println("Tic Tac Toe AI started");
                 }  else if (command.equals("update")) {
                     if (controller.getGame() == null){
-                        System.out.println("Game is null");
-                        out.println("noGame");
+                        System.out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
+                        out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
                         continue;
                     }
@@ -82,6 +85,12 @@ public class ClientHandler implements Runnable {
 
                 }
                 else if (command.equals("update_blink")) {
+                    if (controller.getGame() == null){
+                        System.out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getGameEnd();
                     System.out.println("Response: " + response);
                     out.println(response);
@@ -96,6 +105,12 @@ public class ClientHandler implements Runnable {
                     out.flush();
                 }
                 else if (command.equals("turn")) {
+                    if (controller.getGame() == null){
+                        System.out.println("R");
+                        out.println("R");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getTurn();
                     System.out.println("Response: " + response);
                     out.println(response);
