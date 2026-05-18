@@ -1,8 +1,7 @@
 package chess;
 import Game.Game;
 
-import java.util.Objects;
-import java.util.Scanner;
+
 
 public class Chess implements Game {
     private boolean AIgame = false; // Från dig
@@ -19,7 +18,7 @@ public class Chess implements Game {
     private boolean promotionMode = false;
     private int promotionRow = -1;
     private int promotionCol = -1;
-    private boolean gameOver = false;
+    private boolean isGameEnded = false;
 
     int[][] hästMoves = {
             {2, 1}, {2, -1},
@@ -57,8 +56,8 @@ public class Chess implements Game {
         board[0][0] = new Piece(Player.WHITE, PieceType.TORN);
         board[0][1] = new Piece(Player.WHITE, PieceType.HÄST);
         board[0][2] = new Piece(Player.WHITE, PieceType.LÖPARE);
-        board[0][3] = new Piece(Player.WHITE, PieceType.DROTTNING); // <-- SKA VARA INDEX 3 (d1)
-        board[0][4] = new Piece(Player.WHITE, PieceType.KUNG);      // <-- SKA VARA INDEX 4 (e1)
+        board[0][3] = new Piece(Player.WHITE, PieceType.KUNG);
+        board[0][4] = new Piece(Player.WHITE, PieceType.DROTTNING);
         board[0][5] = new Piece(Player.WHITE, PieceType.LÖPARE);
         board[0][6] = new Piece(Player.WHITE, PieceType.HÄST);
         board[0][7] = new Piece(Player.WHITE, PieceType.TORN);
@@ -69,8 +68,8 @@ public class Chess implements Game {
         board[7][0] = new Piece(Player.BLACK, PieceType.TORN);
         board[7][1] = new Piece(Player.BLACK, PieceType.HÄST);
         board[7][2] = new Piece(Player.BLACK, PieceType.LÖPARE);
-        board[7][3] = new Piece(Player.BLACK, PieceType.DROTTNING); // <-- SKA VARA INDEX 3 (d8)
-        board[7][4] = new Piece(Player.BLACK, PieceType.KUNG);      // <-- SKA VARA INDEX 4 (e8)
+        board[7][3] = new Piece(Player.BLACK, PieceType.KUNG);
+        board[7][4] = new Piece(Player.BLACK, PieceType.DROTTNING);
         board[7][5] = new Piece(Player.BLACK, PieceType.LÖPARE);
         board[7][6] = new Piece(Player.BLACK, PieceType.HÄST);
         board[7][7] = new Piece(Player.BLACK, PieceType.TORN);
@@ -186,91 +185,100 @@ public class Chess implements Game {
     @Override
     public boolean placeTile(int row, int col)
     {
-        if (promotionMode)
+        if (!isGameEnded)
         {
-            Piece newPiece = bondeChangesPiece(row, col);
-
-            if (newPiece != null)
+            if (checkIfCheckMate())
             {
-                board[promotionRow][promotionCol] = newPiece;
-                promotionMode = false;
-                clearValidMoves();
-                selectedRow = -1;
-                selectedCol = -1;
-                endTurn();
+                setIsGameEnded();
             }
-            return true;
-        }
+            if (promotionMode)
+            {
+                Piece newPiece = bondeChangesPiece(row, col);
 
-        if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
-            checkIfKingChecked(currentPlayer);
-
-            clearValidMoves();
-            selectedRow = row;
-            selectedCol = col;
-
-            markBlue(selectedRow, selectedCol);
-            checkMoves(row, col);
-            return true;
-        }
-        if (validMove[row][col] == null) {
-            return false;
-        }
-
-        if (selectedRow != -1 && selectedCol != -1 &&
-                (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
-
-            board[selectedRow][selectedCol].setMoved();
-            int fromRow = selectedRow;
-            int fromCol = selectedCol;
-
-            if (isEnPassant(fromRow, fromCol, row, col)) {
-                executeEnPassant(row, col);
-            }
-
-            Piece movingPiece = board[fromRow][fromCol];
-            if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2) {
-                if (col > selectedCol) {
-                    Piece rook = board[selectedRow][selectedCol + 3];
-                    board[selectedRow][selectedCol + 1] = rook;
-                    board[selectedRow][selectedCol + 3] = emptySpace;
-                    rook.setMoved();
-                } else {
-                    Piece rook = board[selectedRow][selectedCol - 4];
-                    board[selectedRow][selectedCol - 1] = rook;
-                    board[selectedRow][selectedCol - 4] = emptySpace;
-                    rook.setMoved();
+                if (newPiece != null)
+                {
+                    board[promotionRow][promotionCol] = newPiece;
+                    promotionMode = false;
+                    clearValidMoves();
+                    selectedRow = -1;
+                    selectedCol = -1;
+                    endTurn();
                 }
-            }
-
-            board[row][col] = movingPiece;
-            board[fromRow][fromCol] = emptySpace;
-            if (movingPiece.getPiece() == PieceType.BONDE &&
-                    (row == 0 || row == 7))
-            {
-                promotionMode = true;
-
-                promotionRow = row;
-                promotionCol = col;
-
-                clearValidMoves();
-
-                markChangeBondeValid();
-
                 return true;
             }
 
-            clearValidMoves();
-            clearEnPassant();
-            registerEnPassant(fromRow, fromCol, row, col);
+            if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
+                checkIfKingChecked(currentPlayer);
+
+                clearValidMoves();
+                selectedRow = row;
+                selectedCol = col;
+
+                markBlue(selectedRow, selectedCol);
+                checkMoves(row, col);
+                return true;
+            }
+            if (validMove[row][col] == null) {
+                return false;
+            }
+
+            if (selectedRow != -1 && selectedCol != -1 &&
+                    (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
+
+                board[selectedRow][selectedCol].setMoved();
+                int fromRow = selectedRow;
+                int fromCol = selectedCol;
+
+                if (isEnPassant(fromRow, fromCol, row, col)) {
+                    executeEnPassant(row, col);
+                }
+
+                Piece movingPiece = board[fromRow][fromCol];
+                if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
+                        movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
+                    if (col > selectedCol) {
+                        Piece rook = board[selectedRow][selectedCol + 4];
+                        board[selectedRow][selectedCol + 2] = rook;
+                        board[selectedRow][selectedCol + 4] = emptySpace;
+                        rook.setMoved();
+                    } else {
+                        Piece rook = board[selectedRow][selectedCol - 3];
+                        board[selectedRow][selectedCol - 1] = rook;
+                        board[selectedRow][selectedCol - 3] = emptySpace;
+                        rook.setMoved();
+                    }
+                }
+
+                board[row][col] = movingPiece;
+                board[fromRow][fromCol] = emptySpace;
+                if (movingPiece.getPiece() == PieceType.BONDE &&
+                        (row == 0 || row == 7))
+                {
+                    promotionMode = true;
+
+                    promotionRow = row;
+                    promotionCol = col;
+
+                    clearValidMoves();
+
+                    markChangeBondeValid();
+
+                    return true;
+                }
+
+                clearValidMoves();
+                clearEnPassant();
+                registerEnPassant(fromRow, fromCol, row, col);
 
 
 
-            selectedRow = -1;
-            selectedCol = -1;
+                selectedRow = -1;
+                selectedCol = -1;
 
-            endTurn();
-            return true;
+                endTurn();
+                return true;
+            }
+            return false;
         }
         return false;
     }
@@ -387,24 +395,12 @@ public class Chess implements Game {
                     {
                         break;
                     }
-
-                    Piece target = board[newRow][newCol];
-
-                    if (target != null && target.getOwner().equals(currentPlayer))
-                    {
-                        break;
-                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
-                    }
-
-                    if (target != null && target.getPiece() != PieceType.NONE)
-                    {
-                        break;
                     }
                 }
             }
@@ -426,23 +422,12 @@ public class Chess implements Game {
                     {
                         break;
                     }
-                    Piece target = board[newRow][newCol];
-
-                    if (target != null && target.getOwner().equals(currentPlayer))
-                    {
-                        break;
-                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
-                    }
-
-                    if (target != null && target.getPiece() != PieceType.NONE)
-                    {
-                        break;
                     }
                 }
             }
@@ -462,24 +447,12 @@ public class Chess implements Game {
                     {
                         break;
                     }
-
-                    Piece target = board[newRow][newCol];
-
-                    if (target != null && target.getOwner().equals(currentPlayer))
-                    {
-                        break;
-                    }
                     if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                     {
                         if (!markIfValidSliding(newRow, newCol))
                         {
                             break;
                         }
-                    }
-
-                    if (target != null && target.getPiece() != PieceType.NONE)
-                    {
-                        break;
                     }
                 }
             }
@@ -495,39 +468,30 @@ public class Chess implements Game {
                 {
                     markIfValid(newRow, newCol);
                 }
-                Player enemyPlayer = (currentPlayer == Player.WHITE)
-                        ? Player.BLACK
-                        : Player.WHITE;
-                //Castling
                 if (!board[row][col].getisMoved() &&
-                        col - 4 >= 0 &&
-                        !board[row][col - 4].getisMoved() &&
-                        board[row][col - 4].getPiece().equals(PieceType.TORN) &&
-                        isEmpty(row, col - 1) && // d-linjen tom
-                        isEmpty(row, col - 2) && // c-linjen tom
-                        isEmpty(row, col - 3) && // b-linjen tom
-                        !checkIfKingChecked(currentPlayer) &&
-                        !isSquareAttacked(row, col - 1, enemyPlayer) &&
-                        !isSquareAttacked(row, col - 2, enemyPlayer))
+                        !board[row][col - 3].getisMoved() &&
+                        board[row][col - 3].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col - 2) &&
+                        isEmpty(row, col - 1) &&
+                        !checkIfKingChecked(currentPlayer))
                 {
                     int newCol2 = col - 2;
-                    if (!wouldLeaveKingInCheck(row, col, row, newCol2)) {
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
                         markIfValid(row, newCol2);
                     }
                 }
-
                 if (!board[row][col].getisMoved() &&
-                        col + 3 < 8 &&
-                        !board[row][col + 3].getisMoved() &&
-                        board[row][col + 3].getPiece().equals(PieceType.TORN) &&
-                        isEmpty(row, col + 1) && // f-linjen tom
-                        isEmpty(row, col + 2) && // g-linjen tom
-                        !checkIfKingChecked(currentPlayer) &&
-                        !isSquareAttacked(row, col + 1, enemyPlayer) &&
-                        !isSquareAttacked(row, col + 2, enemyPlayer))
+                        !board[row][col + 4].getisMoved() &&
+                        board[row][col + 4].getPiece().equals(PieceType.TORN) &&
+                        isEmpty(row, col + 1) &&
+                        isEmpty(row, col + 2) &&
+                        isEmpty(row, col + 3) &&
+                        !checkIfKingChecked(currentPlayer))
                 {
-                    int newCol2 = col + 2;
-                    if (!wouldLeaveKingInCheck(row, col, row, newCol2)) {
+                    int newCol2 = col + 3;
+                    if (!wouldLeaveKingInCheck(row, col, row, newCol2))
+                    {
                         markIfValid(row, newCol2);
                     }
                 }
@@ -582,18 +546,6 @@ public class Chess implements Game {
             currentPlayer = Player.BLACK;
         } else {
             currentPlayer = Player.WHITE;
-        }
-
-        if (!hasValidMoves(currentPlayer)) {
-            gameOver = true;
-
-            if (checkIfKingChecked(currentPlayer)) {
-                String vinnare = (currentPlayer == Player.WHITE) ? "Svart (AI)" : "Vit";
-                System.out.println("🏆 SCHACKMATT! " + vinnare + " vinner spelet!");
-            } else {
-                System.out.println("🤝 PATT! Spelet slutar oavgjort (Inga lagliga drag, men ingen schack).");
-            }
-            return;
         }
 
         if (isAITurn()) {
@@ -730,8 +682,264 @@ public class Chess implements Game {
         return inCheck;
     }
 
+    public boolean checkIfCheckMate()
+    {
+        if (!checkIfKingChecked(currentPlayer))
+        {
+            return false;
+        }
+
+        for (int fromRow = 0; fromRow < 8; fromRow++)
+        {
+            for (int fromCol = 0; fromCol < 8; fromCol++)
+            {
+                if (isEmpty(fromRow, fromCol))
+                {
+                    continue;
+                }
+
+                Piece piece = board[fromRow][fromCol];
+
+                if (!piece.getOwner().equals(currentPlayer))
+                {
+                    continue;
+                }
+
+                for (int toRow = 0; toRow < 8; toRow++)
+                {
+                    for (int toCol = 0; toCol < 8; toCol++)
+                    {
+                        // move itself -> itself
+                        if (fromRow == toRow && fromCol == toCol)
+                        {
+                            continue;
+                        }
+
+                        if (!canMove(fromRow, fromCol, toRow, toCol))
+                        {
+                            continue;
+                        }
+
+                        if (!wouldLeaveKingInCheck(fromRow, fromCol, toRow, toCol))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean canMove(int r, int c, int tr, int tc)
+    {
+        // board bounds
+        if (tr < 0 || tr >= 8 || tc < 0 || tc >= 8)
+        {
+            return false;
+        }
+
+        // same square
+        if (r == tr && c == tc)
+        {
+            return false;
+        }
+
+        Piece piece = board[r][c];
+
+        if (piece == null || piece.getPiece() == PieceType.NONE)
+        {
+            return false;
+        }
+
+        Piece target = board[tr][tc];
+
+        // cannot capture own piece
+        if (!isEmpty(tr,tc)
+                && target.getOwner() == piece.getOwner())
+        {
+            return false;
+        }
+
+        int dr = tr-r;
+        int dc = tc-c;
+
+        switch(piece.getPiece())
+        {
+
+            case HÄST:
+
+                dr = Math.abs(dr);
+                dc = Math.abs(dc);
+
+                return (dr==2 && dc==1)
+                        || (dr==1 && dc==2);
+
+
+            case TORN:
+
+                if (r!=tr && c!=tc)
+                {
+                    return false;
+                }
+
+                return isPathClear(r,c,tr,tc);
+
+
+            case LÖPARE:
+
+                if (Math.abs(dr)!=Math.abs(dc))
+                {
+                    return false;
+                }
+
+                return isPathClear(r,c,tr,tc);
+
+
+            case DROTTNING:
+
+                boolean straight =
+                        r==tr || c==tc;
+
+                boolean diagonal =
+                        Math.abs(dr)==Math.abs(dc);
+
+                if (!straight && !diagonal)
+                {
+                    return false;
+                }
+
+                return isPathClear(r,c,tr,tc);
+
+
+            case KUNG:
+
+                // normal king move
+                if (Math.abs(dr)<=1
+                        && Math.abs(dc)<=1)
+                {
+                    return true;
+                }
+
+                // kingside castle
+                if (!piece.getisMoved()
+                        && tr==r
+                        && tc==c+2
+                        && isEmpty(r,c+1)
+                        && isEmpty(r,c+2)
+                        && board[r][7].getPiece()==PieceType.TORN
+                        && !board[r][7].getisMoved())
+                {
+                    return true;
+                }
+
+                // queenside castle
+                if (!piece.getisMoved()
+                        && tr==r
+                        && tc==c-2
+                        && isEmpty(r,c-1)
+                        && isEmpty(r,c-2)
+                        && isEmpty(r,c-3)
+                        && board[r][0].getPiece()==PieceType.TORN
+                        && !board[r][0].getisMoved())
+                {
+                    return true;
+                }
+
+                return false;
+
+
+            case BONDE:
+
+                if (piece.getOwner()==Player.WHITE)
+                {
+                    // move forward
+                    if (tc==c && tr==r+1
+                            && isEmpty(tr,tc))
+                    {
+                        return true;
+                    }
+
+                    // first double move
+                    if (!piece.getisMoved()
+                            && tc==c
+                            && tr==r+2
+                            && isEmpty(r+1,c)
+                            && isEmpty(r+2,c))
+                    {
+                        return true;
+                    }
+
+                    // capture
+                    if (tr==r+1
+                            && Math.abs(tc-c)==1
+                            && !isEmpty(tr,tc))
+                    {
+                        return true;
+                    }
+                }
+
+                else
+                {
+                    if (tc==c && tr==r-1
+                            && isEmpty(tr,tc))
+                    {
+                        return true;
+                    }
+
+                    if (!piece.getisMoved()
+                            && tc==c
+                            && tr==r-2
+                            && isEmpty(r-1,c)
+                            && isEmpty(r-2,c))
+                    {
+                        return true;
+                    }
+
+                    if (tr==r-1
+                            && Math.abs(tc-c)==1
+                            && !isEmpty(tr,tc))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+        }
+
+        return false;
+    }
+
+    public boolean isPathClear(int r,int c,int tr,int tc)
+    {
+        int dRow =
+                Integer.signum(tr-r);
+
+        int dCol =
+                Integer.signum(tc-c);
+
+        int currentRow=r+dRow;
+        int currentCol=c+dCol;
+
+        while(currentRow!=tr
+                || currentCol!=tc)
+        {
+            if(!isEmpty(currentRow,currentCol))
+            {
+                return false;
+            }
+
+            currentRow+=dRow;
+            currentCol+=dCol;
+        }
+
+        return true;
+    }
+
     public void stopAI() {
-        if (AIgame && engine != null) {
+        if (AIgame && engine != null)
+        {
             System.out.println("Stänger ner Stockfish...");
             engine.stopEngine();
         }
@@ -740,16 +948,59 @@ public class Chess implements Game {
 
     @Override
     public String getTurn() {
-        return currentPlayer.toString();
+        return "";
     }
 
     @Override
     public String getGameEnd() {
         return "";
     }
+
     @Override
     public boolean isGameEnded() {
-        return gameOver;
+        return false;
+    }
+
+    public void setIsGameEnded()
+    {
+        isGameEnded = true;
+        Player enemyPlayer = (currentPlayer == Player.WHITE)
+                ? Player.BLACK
+                : Player.WHITE;
+        int kingPositionRow = -1;
+        int kingPositionCol = -1;
+        for (int row = 0; row < board.length; row++) {
+            for (int col = 0; col < board.length; col++) {
+                if (!isEmpty(row, col)
+                        && board[row][col].getPiece().equals(PieceType.KUNG)
+                        && board[row][col].getOwner().equals(currentPlayer)) {
+                    kingPositionRow = row;
+                    kingPositionCol = col;
+                }
+            }
+        }
+        if (enemyPlayer == Player.WHITE)
+        {
+            for (int row = 0; row < 2; row++)
+            {
+                for (int col = 0; col < validMove.length; col++)
+                {
+                    validMove[row][col] = "G";
+                    validMove[kingPositionRow][kingPositionCol] = "R";
+                }
+            }
+        }
+        else
+        {
+            for (int row = 6; row < 8; row++)
+            {
+                for (int col = 0; col < validMove.length; col++)
+                {
+                    validMove[row][col] = "G";
+                    validMove[kingPositionRow][kingPositionCol] = "R";
+                }
+            }
+        }
     }
 
     private boolean isEmpty(int row, int col) {
@@ -826,35 +1077,37 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
-
-            engine.sendCommand("uci");
-            // Aktivera begränsningen
-            engine.sendCommand("setoption name UCI_LimitStrength value true");
-            // 1320 är minimum i Stockfish
-            engine.sendCommand("setoption name UCI_Elo value 3000");
         }
     }
+
     private void doComputerMove() {
         new Thread(() -> {
             try {
+                // Skapa FEN-strängen från det aktuella brädet
                 String fen = getFEN();
                 System.out.println("AI läser brädet som: " + fen);
 
-                String bestMove = engine.getBestMove(fen, 50);
+                // Be Stockfish tänka (Tänker i 1.5 sekunder = 1500 millisekunder)
+                String bestMove = engine.getBestMove(fen, 1500);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
-                    System.out.println("🏆 SCHACKMATT! AI:n ger upp.");
-                    return;
-                }
+                // bestMove ser ut så här: "e2e4" eller "g8f6"
+                // Nu måste vi översätta detta till koordinater!
+                if (bestMove != null && bestMove.length() >= 4) {
 
-                if (bestMove.length() >= 4) {
+                    // Bokstäverna a-h är kolumnerna 0-7
                     int fromCol = bestMove.charAt(0) - 'a';
                     int toCol = bestMove.charAt(2) - 'a';
+
+                    // Siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
+                    // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
+                    // Genomför draget direkt på brädet!
                     System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
+
+                    // --- AI:ns egna händer (vi skapar denna om en sekund) ---
                     placeTileAI(fromRow, fromCol, toRow, toCol);
                 }
 
@@ -863,103 +1116,80 @@ public class Chess implements Game {
             }
         }).start();
     }
+
     public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        clearValidMoves();
-
-        validMove[fromRow][fromCol] = "B"; // Visar rutan pjäsen STÅR PÅ (Blå)
-        validMove[toRow][toCol] = "R";     // Visar rutan pjäsen SKA TILL (Röd)
-
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            System.out.println("AI paus avbruten: " + e.getMessage());
-        }
-
+        // 1. Hämta pjäsen som Stockfish vill flytta
         Piece movingPiece = board[fromRow][fromCol];
+
+        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
         movingPiece.setMoved();
 
-
-        if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(toCol - fromCol) == 2) {
-            if (toCol > fromCol) {
-                // Kort rockad (mot h-linjen)
-                Piece rook = board[fromRow][7];
-                board[fromRow][5] = rook;       // Flytta tornet in över kungen
-                board[fromRow][7] = emptySpace; // Töm gamla torn-rutan
-                rook.setMoved();
-            } else {
-                // Lång rockad (mot a-linjen)
-                Piece rook = board[fromRow][0];
-                board[fromRow][3] = rook;       // Flytta tornet in över kungen
-                board[fromRow][0] = emptySpace; // Töm gamla torn-rutan
-                rook.setMoved();
-            }
-        }
-
-
-        if (movingPiece.getPiece() == PieceType.BONDE && fromCol != toCol && board[toRow][toCol].getPiece() == PieceType.NONE) {
-            board[fromRow][toCol] = emptySpace; // Ta bort bonden den "hoppade över"
-        }
-
+        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
         board[toRow][toCol] = movingPiece;
+
+        // 4. Töm den gamla rutan där pjäsen stod innan
         board[fromRow][fromCol] = emptySpace;
 
+        // 5. Städa upp brädet och byt tur
+        clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
-
         endTurn();
-    }        private void clearEnPassant () {
-            enPassantRow = -1;
-            enPassantCol = -1;
+    }
 
-            enPassantOwner = Player.NONE;
+    private void clearEnPassant () {
+        enPassantRow = -1;
+        enPassantCol = -1;
+
+        enPassantOwner = Player.NONE;
+    }
+
+    private void registerEnPassant ( int startRow, int startCol, int endRow, int endCol){
+        if (board[endRow][endCol].getPiece() != PieceType.BONDE) {
+            return;
         }
 
-        private void registerEnPassant ( int startRow, int startCol, int endRow, int endCol){
-            if (board[endRow][endCol].getPiece() != PieceType.BONDE) {
-                return;
-            }
 
+        if (Math.abs(endRow - startRow) == 2) {
+            enPassantRow = (startRow + endRow) / 2;
+            enPassantCol = endCol;
+            enPassantOwner = board[endRow][endCol].getOwner();
+        }
+    }
 
-            if (Math.abs(endRow - startRow) == 2) {
-                enPassantRow = (startRow + endRow) / 2;
-                enPassantCol = endCol;
-                enPassantOwner = board[endRow][endCol].getOwner();
-            }
+    private boolean isEnPassant ( int startRow, int startCol, int endRow, int endCol){
+        if (board[startRow][startCol].getPiece() != PieceType.BONDE) {
+            return false;
         }
 
-        private boolean isEnPassant ( int startRow, int startCol, int endRow, int endCol){
-            if (board[startRow][startCol].getPiece() != PieceType.BONDE) {
-                return false;
-            }
+        return endRow == enPassantRow && endCol == enPassantCol;
+    }
 
-            return endRow == enPassantRow && endCol == enPassantCol;
+    private void executeEnPassant(int toRow, int toCol) {
+        int capturedPawnRow =
+                currentPlayer == Player.WHITE ? toRow - 1 : toRow + 1;
+        board[capturedPawnRow][toCol] = emptySpace;
+    }
+
+    private void markEnPassantIfValid ( int row, int col, int direction){
+        if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
+            return;
         }
 
-        private void executeEnPassant(int toRow, int toCol) {
-            int capturedPawnRow =
-                    currentPlayer == Player.WHITE ? toRow - 1 : toRow + 1;
-            board[capturedPawnRow][toCol] = emptySpace;
+        if (col - 1 >= 0 &&
+                row + direction == enPassantRow &&
+                col - 1 == enPassantCol) {
+            validMove[row + direction][col - 1] = "R";
         }
 
-        private void markEnPassantIfValid ( int row, int col, int direction){
-            if (enPassantOwner == Player.NONE || enPassantOwner == currentPlayer) {
-                return;
-            }
-
-            if (col - 1 >= 0 &&
-                    row + direction == enPassantRow &&
-                    col - 1 == enPassantCol) {
-                validMove[row + direction][col - 1] = "R";
-            }
-
-            if (col + 1 < 8 &&
-                    row + direction == enPassantRow &&
-                    col + 1 == enPassantCol) {
-                validMove[row + direction][col + 1] = "R";
-            }
+        if (col + 1 < 8 &&
+                row + direction == enPassantRow &&
+                col + 1 == enPassantCol) {
+            validMove[row + direction][col + 1] = "R";
         }
+    }
 
     public Piece bondeChangesPiece(int selectedRow, int selectedCol)
     {
@@ -995,29 +1225,6 @@ public class Chess implements Game {
         validMove[3][5] = "P";
         validMove[4][5] = "P";
     }
-    private boolean hasValidMoves(Player player) {
-        boolean hasMoves = false;
-
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                if (board[r][c].getOwner() == player) {
-                    clearValidMoves();
-                    checkMoves(r, c);
-
-                    for (int i = 0; i < 8; i++) {
-                        for (int j = 0; j < 8; j++) {
-                            if (validMove[i][j] != null && (validMove[i][j].equals("G") || validMove[i][j].equals("R"))) {
-                                hasMoves = true;
-                                break;
-                            }
-                        }
-                        if (hasMoves) break;
-                    }
-                }
-                if (hasMoves) break;
-            }
-        }
-        clearValidMoves();
-        return hasMoves;
-    }
 }
+
+
