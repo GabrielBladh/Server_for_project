@@ -238,7 +238,7 @@ public class Chess implements Game {
                         movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
                     if (col > selectedCol) {
                         Piece rook = board[selectedRow][selectedCol + 4];
-                        board[selectedRow][selectedCol + 2] = rook;
+                        board[selectedRow][selectedCol + 1] = rook;
                         board[selectedRow][selectedCol + 4] = emptySpace;
                         rook.setMoved();
                     } else {
@@ -489,7 +489,7 @@ public class Chess implements Game {
                         isEmpty(row, col + 3) &&
                         !checkIfKingChecked(currentPlayer))
                 {
-                    int newCol2 = col + 3;
+                    int newCol2 = col + 2;
                     if (!wouldLeaveKingInCheck(row, col, row, newCol2))
                     {
                         markIfValid(row, newCol2);
