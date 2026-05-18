@@ -20,6 +20,10 @@ public class Chess implements Game {
     private int promotionRow = -1;
     private int promotionCol = -1;
     private boolean gameOver = false;
+    private int aiPendingFromRow = -1;
+    private int aiPendingFromCol = -1;
+    private int aiPendingToRow = -1;
+    private int aiPendingToCol = -1;
 
     int[][] hästMoves = {
             {2, 1}, {2, -1},
@@ -186,20 +190,33 @@ public class Chess implements Game {
     @Override
     public boolean placeTile(int row, int col)
     {
-        if (promotionMode)
-        {
-            Piece newPiece = bondeChangesPiece(row, col);
+        if (isAITurn()) {
+            if (aiPendingFromRow != -1) { // AI:n väntar på att du ska flytta dess pjäs
+                if (selectedRow == -1 && selectedCol == -1) {
+                    // Första trycket MÅSTE vara på pjäsen AI:n vill flytta
+                    if (row == aiPendingFromRow && col == aiPendingFromCol) {
+                        selectedRow = row;
+                        selectedCol = col;
+                        return true;
+                    }
+                } else {
+                    // Andra trycket MÅSTE vara på rutan AI:n vill flytta till
+                    if (row == aiPendingToRow && col == aiPendingToCol) {
+                        placeTileAI(aiPendingFromRow, aiPendingFromCol, aiPendingToRow, aiPendingToCol);
 
-            if (newPiece != null)
-            {
-                board[promotionRow][promotionCol] = newPiece;
-                promotionMode = false;
-                clearValidMoves();
-                selectedRow = -1;
-                selectedCol = -1;
-                endTurn();
+                        // Nollställ AI-minnet inför nästa runda
+                        aiPendingFromRow = -1; aiPendingFromCol = -1;
+                        aiPendingToRow = -1;   aiPendingToCol = -1;
+                        return true;
+                    } else {
+                        // Klickade fel! Avbryt och tvinga människan att försöka igen
+                        selectedRow = -1;
+                        selectedCol = -1;
+                        return false;
+                    }
+                }
             }
-            return true;
+            return false; // Ignorera alla andra knapptryck tills AI:n sagt sitt drag
         }
 
         if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
@@ -840,24 +857,26 @@ public class Chess implements Game {
                 String fen = getFEN();
                 System.out.println("AI läser brädet som: " + fen);
 
-                String bestMove = engine.getBestMove(fen, 50);
+                String bestMove = engine.getBestMove(fen, 1500); // AI tänker
                 System.out.println("Stockfish säger: " + bestMove);
 
-                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
-                    System.out.println("🏆 SCHACKMATT! AI:n ger upp.");
-                    return;
-                }
-
-                if (bestMove.length() >= 4) {
+                if (bestMove != null && bestMove.length() >= 4) {
                     int fromCol = bestMove.charAt(0) - 'a';
                     int toCol = bestMove.charAt(2) - 'a';
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
-                    placeTileAI(fromRow, fromCol, toRow, toCol);
-                }
+                    // 1. Spara AI:ns önskade drag i minnet
+                    aiPendingFromRow = fromRow;
+                    aiPendingFromCol = fromCol;
+                    aiPendingToRow = toRow;
+                    aiPendingToCol = toCol;
 
+                    // 2. Tänd LED-lamporna så människan ser draget!
+                    clearValidMoves();
+                    validMove[fromRow][fromCol] = "B"; // Lyser upp startrutan
+                    validMove[toRow][toCol] = "R";     // Lyser upp målrutan
+                }
             } catch (Exception e) {
                 System.out.println("Fel i AI-tråden: " + e.getMessage());
             }
@@ -866,50 +885,18 @@ public class Chess implements Game {
     public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        clearValidMoves();
-
-        validMove[fromRow][fromCol] = "B"; // Visar rutan pjäsen STÅR PÅ (Blå)
-        validMove[toRow][toCol] = "R";     // Visar rutan pjäsen SKA TILL (Röd)
-
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            System.out.println("AI paus avbruten: " + e.getMessage());
-        }
-
         Piece movingPiece = board[fromRow][fromCol];
         movingPiece.setMoved();
-
-
-        if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(toCol - fromCol) == 2) {
-            if (toCol > fromCol) {
-                // Kort rockad (mot h-linjen)
-                Piece rook = board[fromRow][7];
-                board[fromRow][5] = rook;       // Flytta tornet in över kungen
-                board[fromRow][7] = emptySpace; // Töm gamla torn-rutan
-                rook.setMoved();
-            } else {
-                // Lång rockad (mot a-linjen)
-                Piece rook = board[fromRow][0];
-                board[fromRow][3] = rook;       // Flytta tornet in över kungen
-                board[fromRow][0] = emptySpace; // Töm gamla torn-rutan
-                rook.setMoved();
-            }
-        }
-
-
-        if (movingPiece.getPiece() == PieceType.BONDE && fromCol != toCol && board[toRow][toCol].getPiece() == PieceType.NONE) {
-            board[fromRow][toCol] = emptySpace; // Ta bort bonden den "hoppade över"
-        }
 
         board[toRow][toCol] = movingPiece;
         board[fromRow][fromCol] = emptySpace;
 
+        clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
-
         endTurn();
-    }        private void clearEnPassant () {
+    }
+    private void clearEnPassant () {
             enPassantRow = -1;
             enPassantCol = -1;
 

@@ -138,10 +138,6 @@ public class ClientHandler implements Runnable {
                             if (((TicTacToe) currentGame).isAITurn()) {
                                 continue;
                             }
-                        } else if (currentGame instanceof Chess) {
-                            if (((Chess) currentGame).isAITurn()) {
-                                continue;
-                            }
                         }
 
                         currentGame.placeTile(x_värde, y_värde);
