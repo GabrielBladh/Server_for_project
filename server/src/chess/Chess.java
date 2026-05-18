@@ -1075,7 +1075,7 @@ public class Chess implements Game {
         this.AIgame = isAI;
         if (isAI) {
             engine = new StockfishEngine();
-            String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
+            String macPath = "stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
         }
     }
