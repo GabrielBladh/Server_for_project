@@ -19,6 +19,10 @@ public class Chess implements Game {
     private int promotionRow = -1;
     private int promotionCol = -1;
     private boolean isGameEnded = false;
+    private int aiPendingFromRow = -1;
+    private int aiPendingFromCol = -1;
+    private int aiPendingToRow = -1;
+    private int aiPendingToCol = -1;
 
     int[][] hästMoves = {
             {2, 1}, {2, -1},
@@ -182,17 +186,51 @@ public class Chess implements Game {
         return validMovesStringBuilder;
     }
 
+
     @Override
     public boolean placeTile(int row, int col)
     {
-        if (!isGameEnded)
-        {
+        if (!isGameEnded) {
+            if (isAITurn()) {
+                if (aiPendingFromRow != -1) { // AI väntar på att du flyttar dess pjäs
+                    if (selectedRow == -1 && selectedCol == -1) {
+                        // Första trycket MÅSTE vara på pjäsen AI vill flytta (Blå ruta)
+                        if (row == aiPendingFromRow && col == aiPendingFromCol) {
+                            selectedRow = row;
+                            selectedCol = col;
+                            return true;
+                        }
+                    } else {
+                        // --- NYTT SKYDD: Ignorera om man råkar dubbelklicka på startrutan ---
+                        if (row == selectedRow && col == selectedCol) {
+                            return true;
+                        }
+                        // --------------------------------------------------------------------
+
+                        // Andra trycket MÅSTE vara på rutan AI vill flytta till (Röd ruta)
+                        if (row == aiPendingToRow && col == aiPendingToCol) {
+                            placeTileAI(aiPendingFromRow, aiPendingFromCol, aiPendingToRow, aiPendingToCol);
+
+                            // Nollställ minnet inför nästa runda
+                            aiPendingFromRow = -1; aiPendingFromCol = -1;
+                            aiPendingToRow = -1;   aiPendingToCol = -1;
+                            return true;
+                        } else {
+                            // Felklick, avbryt och tvinga människan att försöka igen
+                            selectedRow = -1;
+                            selectedCol = -1;
+                            return false;
+                        }
+                    }
+                }
+                return false; // Ignorera alla andra knapptryck tills AI sagt sitt drag
+            }
+
             if (checkIfCheckMate())
             {
                 setIsGameEnded();
             }
-            if (promotionMode)
-            {
+            if (promotionMode) {
                 Piece newPiece = bondeChangesPiece(row, col);
 
                 if (newPiece != null)
@@ -1075,7 +1113,7 @@ public class Chess implements Game {
         this.AIgame = isAI;
         if (isAI) {
             engine = new StockfishEngine();
-            String macPath = "stockfish/stockfish-macos-m1-apple-silicon";
+            String macPath = "/Users/hooje/Documents/stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
         }
     }
@@ -1083,32 +1121,28 @@ public class Chess implements Game {
     private void doComputerMove() {
         new Thread(() -> {
             try {
-                // Skapa FEN-strängen från det aktuella brädet
                 String fen = getFEN();
                 System.out.println("AI läser brädet som: " + fen);
 
-                // Be Stockfish tänka (Tänker i 1.5 sekunder = 1500 millisekunder)
                 String bestMove = engine.getBestMove(fen, 1500);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                // bestMove ser ut så här: "e2e4" eller "g8f6"
-                // Nu måste vi översätta detta till koordinater!
                 if (bestMove != null && bestMove.length() >= 4) {
-
-                    // Bokstäverna a-h är kolumnerna 0-7
                     int fromCol = bestMove.charAt(0) - 'a';
                     int toCol = bestMove.charAt(2) - 'a';
-
-                    // Siffrorna 1-8 är raderna (0-7, fast upp och ner i din logik)
-                    // (Observera att detta kan behöva justeras beroende på om rad 0 är vit eller svart hos dig)
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    // Genomför draget direkt på brädet!
-                    System.out.println("AI flyttar från [" + fromRow + "," + fromCol + "] till [" + toRow + "," + toCol + "]");
+                    // 1. Spara AI:ns önskade drag i minnet
+                    aiPendingFromRow = fromRow;
+                    aiPendingFromCol = fromCol;
+                    aiPendingToRow = toRow;
+                    aiPendingToCol = toCol;
 
-                    // --- AI:ns egna händer (vi skapar denna om en sekund) ---
-                    placeTileAI(fromRow, fromCol, toRow, toCol);
+                    // 2. Tänd LED-lamporna så människan ser draget!
+                    clearValidMoves();
+                    validMove[fromRow][fromCol] = "B"; // Lyser upp startrutan (Blå)
+                    validMove[toRow][toCol] = "R";     // Lyser upp målrutan (Röd)
                 }
 
             } catch (Exception e) {
@@ -1116,7 +1150,6 @@ public class Chess implements Game {
             }
         }).start();
     }
-
     public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 

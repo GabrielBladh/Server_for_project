@@ -141,7 +141,6 @@ public class ClientHandler implements Runnable {
                         }
 
                         currentGame.placeTile(x_värde, y_värde);
-                        currentGame.placeTile(x_värde, y_värde);
 
                         System.out.println("Button pressed: " + x_värde + ":" + y_värde);
 
