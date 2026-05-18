@@ -27,6 +27,9 @@ public class ClientHandler implements Runnable {
                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
 
             while (true){
+                if (!socket.isConnected()){
+                    socket.close();
+                }
                 String command = in.readLine();
                 if (command == null){
                     System.out.println("Disconnected connection from " + socket.getInetAddress().getHostName());
@@ -70,8 +73,8 @@ public class ClientHandler implements Runnable {
                     System.out.println("Tic Tac Toe AI started");
                 }  else if (command.equals("update")) {
                     if (controller.getGame() == null){
-                        System.out.println("Game is null");
-                        out.println("noGame");
+                        System.out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
+                        out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
                         continue;
                     }
@@ -82,6 +85,12 @@ public class ClientHandler implements Runnable {
 
                 }
                 else if (command.equals("update_blink")) {
+                    if (controller.getGame() == null){
+                        System.out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getGameEnd();
                     System.out.println("Response: " + response);
                     out.println(response);
@@ -96,41 +105,50 @@ public class ClientHandler implements Runnable {
                     out.flush();
                 }
                 else if (command.equals("turn")) {
+                    if (controller.getGame() == null){
+                        System.out.println("R");
+                        out.println("R");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getTurn();
                     System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }
                 else if (command.equals("press")) {
-                    command = in.readLine();
-                    String[] commands = command.split(":");
-                    int x_värde = Integer.parseInt(commands[0]);
-                    int y_värde = Integer.parseInt(commands[1]);
-                    Game currentGame = controller.getGame();
-
-                    if (currentGame instanceof Checkers) {
-                        if (((Checkers) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: Checkers AI tänker!");
-                            continue;
-                        }
-                    } else if (currentGame instanceof TicTacToe) {
-                        if (((TicTacToe) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: TicTacToe AI tänker!");
-                            continue;
-                        }
-                    } else if (currentGame instanceof Chess) { // <-- NYTT FÖR SCHACK!
-                        if (((Chess) currentGame).isAITurn()) {
-                            System.out.println("Spärrat: Stockfish tänker!");
-                            continue;
-                        }
+                    command = in.readLine(); // Läser förhoppningsvis "3:4"
+                    if (command == null || !command.contains(":")) {
+                        System.out.println("TCP Krock undviken! Förväntade koordinater, fick: " + command);
+                        continue;
                     }
 
-                    currentGame.placeTile(x_värde, y_värde);
-                    currentGame.placeTile(x_värde, y_värde);
-                    System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+                    try {
+                        String[] commands = command.split(":");
+                        int x_värde = Integer.parseInt(commands[0].trim());
+                        int y_värde = Integer.parseInt(commands[1].trim());
 
-                }
-            }
+                        Game currentGame = controller.getGame();
+
+                        if (currentGame instanceof Checkers) {
+                            if (((Checkers) currentGame).isAITurn()) {
+                                continue;
+                            }
+                        } else if (currentGame instanceof TicTacToe) {
+                            if (((TicTacToe) currentGame).isAITurn()) {
+                                continue;
+                            }
+                        }
+
+                        currentGame.placeTile(x_värde, y_värde);
+                        currentGame.placeTile(x_värde, y_värde);
+
+                        System.out.println("Button pressed: " + x_värde + ":" + y_värde);
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("Kunde inte läsa siffrorna: " + command);
+                    }
+                }            }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
