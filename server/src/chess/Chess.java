@@ -207,7 +207,8 @@ public class Chess implements Game {
                 return true;
             }
 
-            if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer)) {
+            if (!isEmpty(row, col) && board[row][col].getOwner().equals(currentPlayer))
+            {
                 checkIfKingChecked(currentPlayer);
 
                 clearValidMoves();
@@ -395,12 +396,10 @@ public class Chess implements Game {
                     {
                         break;
                     }
-                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
-                    {
-                        if (!markIfValidSliding(newRow, newCol))
-                        {
-                            break;
-                        }
+
+                    Piece target = this.board[newRow][newCol];
+                    if (target != null && target.getOwner().equals(currentPlayer) || !wouldLeaveKingInCheck(row, col, newRow, newCol) && !markIfValidSliding(newRow, newCol) || target != null && target.getPiece() != PieceType.NONE) {
+                        break;
                     }
                 }
             }
@@ -418,16 +417,13 @@ public class Chess implements Game {
                     int newRow = row + dRow * step;
                     int newCol = col + dCol * step;
 
-                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
-                    {
+                    if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) {
                         break;
                     }
-                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
-                    {
-                        if (!markIfValidSliding(newRow, newCol))
-                        {
-                            break;
-                        }
+
+                    Piece target = this.board[newRow][newCol];
+                    if (target != null && target.getOwner().equals(currentPlayer) || !wouldLeaveKingInCheck(row, col, newRow, newCol) && !markIfValidSliding(newRow, newCol) || target != null && target.getPiece() != PieceType.NONE) {
+                        break;
                     }
                 }
             }
@@ -447,12 +443,10 @@ public class Chess implements Game {
                     {
                         break;
                     }
-                    if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
-                    {
-                        if (!markIfValidSliding(newRow, newCol))
-                        {
-                            break;
-                        }
+
+                    Piece target = this.board[newRow][newCol];
+                    if (target != null && target.getOwner().equals(currentPlayer) || !wouldLeaveKingInCheck(row, col, newRow, newCol) && !markIfValidSliding(newRow, newCol) || target != null && target.getPiece() != PieceType.NONE) {
+                        break;
                     }
                 }
             }
@@ -621,13 +615,13 @@ public class Chess implements Game {
                 }
             }
         }
-
         for (int[] d : drottningMoves) {
             int row = kingPositionRow + d[0];
             int col = kingPositionCol + d[1];
             while (row >= 0 && row < board.length && col >= 0 && col < board[0].length) {
                 Piece piece = board[row][col];
-                if (piece != null && piece.getPiece() != PieceType.NONE) {
+                if (piece != null && piece.getPiece() != PieceType.NONE)
+                {
                     if (piece.getOwner().equals(enemyPlayer)) {
                         boolean isStraight = d[0] == 0 || d[1] == 0;
                         boolean isDiagonal = Math.abs(d[0]) == Math.abs(d[1]) && d[0] != 0;
