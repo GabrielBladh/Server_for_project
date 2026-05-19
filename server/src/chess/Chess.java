@@ -190,6 +190,10 @@ public class Chess implements Game {
     @Override
     public boolean placeTile(int row, int col)
     {
+        if (checkIfCheckMate())
+        {
+            setIsGameEnded();
+        }
         if (!isGameEnded) {
             if (isAITurn()) {
                 if (aiPendingFromRow != -1) { // AI väntar på att du flyttar dess pjäs
@@ -226,10 +230,6 @@ public class Chess implements Game {
                 return false; // Ignorera alla andra knapptryck tills AI sagt sitt drag
             }
 
-            if (checkIfCheckMate())
-            {
-                setIsGameEnded();
-            }
             if (promotionMode) {
                 Piece newPiece = bondeChangesPiece(row, col);
 
@@ -262,7 +262,8 @@ public class Chess implements Game {
             }
 
             if (selectedRow != -1 && selectedCol != -1 &&
-                    (validMove[row][col].equals("G") || validMove[row][col].equals("R"))) {
+                    (validMove[row][col].equals("G") || validMove[row][col].equals("R")))
+            {
 
                 board[selectedRow][selectedCol].setMoved();
                 int fromRow = selectedRow;
@@ -308,8 +309,6 @@ public class Chess implements Game {
                 clearValidMoves();
                 clearEnPassant();
                 registerEnPassant(fromRow, fromCol, row, col);
-
-
 
                 selectedRow = -1;
                 selectedCol = -1;
