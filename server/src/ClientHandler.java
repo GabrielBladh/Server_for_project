@@ -36,7 +36,6 @@ public class ClientHandler implements Runnable {
                     socket.close();
                     break;
                 }
-                System.out.println("Request: " + command);
 
                 if (command.equals("Checkers")) {
                     controller.setGame(new Checkers());
@@ -73,34 +72,34 @@ public class ClientHandler implements Runnable {
                     System.out.println("Tic Tac Toe AI started");
                 }  else if (command.equals("update")) {
                     if (controller.getGame() == null){
-                        System.out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
                         continue;
                     }
                     String response = controller.getGame().getGameStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
                 }
                 else if (command.equals("update_blink")) {
                     if (controller.getGame() == null){
-                        System.out.println("0000000000000000000000000000000000000000000000000000000000000000");
                         out.println("0000000000000000000000000000000000000000000000000000000000000000");
                         out.flush();
                         continue;
                     }
                     String response = controller.getGame().getGameEnd();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
                 }
 
                 else if (command.equals("update_chess")){
+                    if (controller.getGame() == null){
+                        out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getBoardStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }
@@ -112,7 +111,6 @@ public class ClientHandler implements Runnable {
                         continue;
                     }
                     String response = controller.getGame().getTurn();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }

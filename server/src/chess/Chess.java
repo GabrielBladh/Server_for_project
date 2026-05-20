@@ -275,54 +275,7 @@ public class Chess implements Game {
                     (validMove[row][col].equals("G") || validMove[row][col].equals("R")))
             {
 
-                board[selectedRow][selectedCol].setMoved();
-                int fromRow = selectedRow;
-                int fromCol = selectedCol;
-
-                if (isEnPassant(fromRow, fromCol, row, col)) {
-                    executeEnPassant(row, col);
-                }
-
-                Piece movingPiece = board[fromRow][fromCol];
-                if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
-                        movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
-                    if (col > selectedCol) {
-                        Piece rook = board[selectedRow][selectedCol + 4];
-                        board[selectedRow][selectedCol + 1] = rook;
-                        board[selectedRow][selectedCol + 4] = emptySpace;
-                        rook.setMoved();
-                    } else {
-                        Piece rook = board[selectedRow][selectedCol - 3];
-                        board[selectedRow][selectedCol - 1] = rook;
-                        board[selectedRow][selectedCol - 3] = emptySpace;
-                        rook.setMoved();
-                    }
-                }
-
-                board[row][col] = movingPiece;
-                board[fromRow][fromCol] = emptySpace;
-                if (movingPiece.getPiece() == PieceType.BONDE &&
-                        (row == 0 || row == 7))
-                {
-                    promotionMode = true;
-
-                    promotionRow = row;
-                    promotionCol = col;
-
-                    clearValidMoves();
-
-                    markChangeBondeValid();
-
-                    return true;
-                }
-
-                clearValidMoves();
-                clearEnPassant();
-                registerEnPassant(fromRow, fromCol, row, col);
-
-                selectedRow = -1;
-                selectedCol = -1;
-
+                makeMove(row, col);
                 endTurn();
                 return true;
             }
@@ -330,6 +283,55 @@ public class Chess implements Game {
         }
         return false;
     }
+
+    public void makeMove(int row, int col) {
+        board[selectedRow][selectedCol].setMoved();
+        int fromRow = selectedRow;
+        int fromCol = selectedCol;
+
+        if (isEnPassant(fromRow, fromCol, row, col)) {
+            executeEnPassant(row, col);
+        }
+
+        Piece movingPiece = board[fromRow][fromCol];
+        if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
+                movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
+            if (col > selectedCol) {
+                Piece rook = board[selectedRow][selectedCol + 4];
+                board[selectedRow][selectedCol + 1] = rook;
+                board[selectedRow][selectedCol + 4] = emptySpace;
+                rook.setMoved();
+            } else {
+                Piece rook = board[selectedRow][selectedCol - 3];
+                board[selectedRow][selectedCol - 1] = rook;
+                board[selectedRow][selectedCol - 3] = emptySpace;
+                rook.setMoved();
+            }
+        }
+
+        board[row][col] = movingPiece;
+        board[fromRow][fromCol] = emptySpace;
+        if (movingPiece.getPiece() == PieceType.BONDE &&
+                (row == 0 || row == 7))
+        {
+            promotionMode = true;
+
+            promotionRow = row;
+            promotionCol = col;
+
+            clearValidMoves();
+
+            markChangeBondeValid();
+        }
+
+        clearValidMoves();
+        clearEnPassant();
+        registerEnPassant(fromRow, fromCol, row, col);
+
+        selectedRow = -1;
+        selectedCol = -1;
+    }
+
 
     public void checkMoves(int row, int col) {
         //Hur bonde kan röra sig
@@ -1063,7 +1065,7 @@ public class Chess implements Game {
         // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
         for (int row = 7; row >= 0; row--) {
             int emptySquares = 0;
-            for (int col = 0; col < 8; col++) {
+            for (int col = 7; col >= 0; col--) {
                 Piece currentPiece = board[row][col];
 
                 if (currentPiece.getPiece() == PieceType.NONE) {
@@ -1089,7 +1091,36 @@ public class Chess implements Game {
 
         // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
         // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
-        fen.append("KQkq ");
+        String rockadMöjligt = "";
+
+        if (board[0][3].getPiece() == PieceType.KUNG && !board[0][3].getisMoved()) {
+
+            if (board[0][0].getPiece() == PieceType.TORN && !board[0][0].getisMoved()) {
+                rockadMöjligt += "Q";
+            }
+
+            if (board[0][7].getPiece() == PieceType.TORN && !board[0][7].getisMoved()) {
+                rockadMöjligt += "K";
+            }
+        }
+
+        if (board[7][3].getPiece() == PieceType.KUNG && !board[7][3].getisMoved()) {
+
+            if (board[7][0].getPiece() == PieceType.TORN && !board[7][0].getisMoved()) {
+                rockadMöjligt += "q";
+            }
+
+
+            if (board[7][7].getPiece() == PieceType.TORN && !board[7][7].getisMoved()) {
+                rockadMöjligt += "k";
+            }
+        }
+
+        if (rockadMöjligt.isEmpty()) {
+            rockadMöjligt = "-";
+        }
+
+        fen.append(rockadMöjligt).append(" ");
 
         // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
         fen.append("- ");
@@ -1140,8 +1171,8 @@ public class Chess implements Game {
                 System.out.println("Stockfish säger: " + bestMove);
 
                 if (bestMove != null && bestMove.length() >= 4) {
-                    int fromCol = bestMove.charAt(0) - 'a';
-                    int toCol = bestMove.charAt(2) - 'a';
+                    int fromCol = 7 -(bestMove.charAt(0) - 'a');
+                    int toCol = 7 - (bestMove.charAt(2) - 'a');
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
@@ -1172,10 +1203,7 @@ public class Chess implements Game {
         movingPiece.setMoved();
 
         // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
-        board[toRow][toCol] = movingPiece;
-
-        // 4. Töm den gamla rutan där pjäsen stod innan
-        board[fromRow][fromCol] = emptySpace;
+        makeMove(toRow, toCol);
 
         // 5. Städa upp brädet och byt tur
         clearValidMoves();
