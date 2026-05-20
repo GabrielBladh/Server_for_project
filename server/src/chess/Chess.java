@@ -495,6 +495,9 @@ public class Chess implements Game {
                 int newRow = row + kungMoves[i][0];
                 int newCol = col + kungMoves[i][1];
 
+                Player enemyPlayer = (currentPlayer == Player.WHITE)
+                        ? Player.BLACK
+                        : Player.WHITE;
                 if (!wouldLeaveKingInCheck(row, col, newRow, newCol))
                 {
                     markIfValid(newRow, newCol);
@@ -504,6 +507,8 @@ public class Chess implements Game {
                         board[row][col - 3].getPiece().equals(PieceType.TORN) &&
                         isEmpty(row, col - 2) &&
                         isEmpty(row, col - 1) &&
+                        !isSquareAttacked(row, col -2, enemyPlayer) &&
+                        !isSquareAttacked(row, col - 1, enemyPlayer) &&
                         !checkIfKingChecked(currentPlayer))
                 {
                     int newCol2 = col - 2;
@@ -518,6 +523,9 @@ public class Chess implements Game {
                         isEmpty(row, col + 1) &&
                         isEmpty(row, col + 2) &&
                         isEmpty(row, col + 3) &&
+                        !isSquareAttacked(row, col + 1, enemyPlayer) &&
+                        !isSquareAttacked(row, col + 2, enemyPlayer) &&
+                        !isSquareAttacked(row, col + 3, enemyPlayer) &&
                         !checkIfKingChecked(currentPlayer))
                 {
                     int newCol2 = col + 2;
