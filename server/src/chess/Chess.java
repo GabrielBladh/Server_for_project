@@ -276,8 +276,9 @@ public class Chess implements Game {
             {
 
                 makeMove(row, col);
-                endTurn();
-                return true;
+                if (!promotionMode) {
+                    endTurn();
+                }                return true;
             }
             return false;
         }
@@ -315,16 +316,15 @@ public class Chess implements Game {
                 (row == 0 || row == 7))
         {
             promotionMode = true;
-
             promotionRow = row;
             promotionCol = col;
 
             clearValidMoves();
-
             markChangeBondeValid();
+        } else {
+            clearValidMoves();
         }
 
-        clearValidMoves();
         clearEnPassant();
         registerEnPassant(fromRow, fromCol, row, col);
 
