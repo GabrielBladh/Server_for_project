@@ -4,6 +4,7 @@ import Game.Game;
 
 
 public class Chess implements Game {
+    private String difficultyLevel = "easy";
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
     private Player currentPlayer = Player.WHITE;
@@ -331,7 +332,56 @@ public class Chess implements Game {
         selectedRow = -1;
         selectedCol = -1;
     }
+    private void doBeginnerMove(){
+      new  Thread(() ->{
+          try{
+              Thread.sleep(1500);
+              java.util.List<int[]> possibleMoves = new java.util.ArrayList<>();
+              java.util.List<int[]> captureMoves = new java.util.ArrayList<>();
+              for (int r = 0; r < 8; r++){
+                  for (int c = 0; c < 8; c++){
+                      if (board[r][c].getOwner() == Player.BLACK){
+                          clearValidMoves();
+                          checkMoves(r, c);
+                          for (int tr = 0; tr < 8; tr++){
+                              for (int tc = 0; tc < 8; tc++){
+                                if ("G".equals((validMove[tr][tc]))){
+                                    possibleMoves.add(new int[]{r, c, tr, tc});
+                                }
+                                else if ("R".equals(validMove[tr][tc])){
+                                    captureMoves.add(new int[]{r, c,tr, tc});
+                                }
+                              }
+                          }
+                      }
+                  }
+              }
+              clearValidMoves();
+              if(possibleMoves.isEmpty() && captureMoves.isEmpty()){
+                  setIsGameEnded();
+                  return;
+              }
+              int [] selectedMove;
+              java.util.Random rand = new java.util.Random();
 
+              if(!captureMoves.isEmpty()){
+                  //egen ai tar motstånds pjäs
+                  selectedMove = captureMoves.get(rand.nextInt(captureMoves.size()));
+              } else{
+                  //flyttar slumpm'ssig drag
+                  selectedMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+              }
+              aiPendingFromRow = selectedMove[0];
+              aiPendingFromCol = selectedMove[1];
+              aiPendingToRow = selectedMove [2];
+              aiPendingToCol = selectedMove[3];
+              validMove[aiPendingFromRow][aiPendingFromCol] = "B";
+              validMove[aiPendingToRow][aiPendingToCol] = "R";
+          } catch (Exception e){
+                System.out.println("Fel i nybörjare-AI " + e.getMessage());
+            }
+    }).start();
+    }
 
     public void checkMoves(int row, int col) {
         //Hur bonde kan röra sig
@@ -1157,10 +1207,24 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "../../stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
+            if (!difficultyLevel.equals("easy")){
+                engine.setDifficulty(difficultyLevel);
+            }
         }
     }
 
+    public void setDifficultyLevel(String level){
+        this.difficultyLevel = level.toLowerCase().trim();
+        if (engine != null){
+            engine.setDifficulty(this.difficultyLevel);
+        }
+        System.out.println("Spelets svårighetsgrad har uppdaterats till: " + this.difficultyLevel);
+    }
     private void doComputerMove() {
+        if (difficultyLevel.equals("easy")){
+            doBeginnerMove();
+            return;
+        }
         new Thread(() -> {
             try {
                 String fen = getFEN();
