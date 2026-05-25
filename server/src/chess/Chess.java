@@ -1207,9 +1207,6 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "../../stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
-            if (!difficultyLevel.equals("easy")){
-                engine.setDifficulty(difficultyLevel);
-            }
         }
     }
 
@@ -1234,19 +1231,24 @@ public class Chess implements Game {
                 String bestMove = engine.getBestMove(fen);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                if (bestMove != null && bestMove.length() >= 4) {
+                // --- SPÄRR FÖR SCHACKMATT MÅSTE VARA MED HÄR ---
+                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
+                    System.out.println("🏆 SCHACKMATT! Stockfish har inga drag.");
+                    setIsGameEnded();
+                    return;
+                }
+
+                if (bestMove.length() >= 4) {
                     int fromCol = 7 -(bestMove.charAt(0) - 'a');
                     int toCol = 7 - (bestMove.charAt(2) - 'a');
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    // 1. Spara AI:ns önskade drag i minnet
                     aiPendingFromRow = fromRow;
                     aiPendingFromCol = fromCol;
                     aiPendingToRow = toRow;
                     aiPendingToCol = toCol;
 
-                    // 2. Tänd LED-lamporna så människan ser draget!
                     clearValidMoves();
                     validMove[fromRow][fromCol] = "B"; // Lyser upp startrutan (Blå)
                     validMove[toRow][toCol] = "R";     // Lyser upp målrutan (Röd)
@@ -1256,26 +1258,19 @@ public class Chess implements Game {
                 System.out.println("Fel i AI-tråden: " + e.getMessage());
             }
         }).start();
-    }
-    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
+    }    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        // 1. Hämta pjäsen som Stockfish vill flytta
+        selectedRow = fromRow;
+        selectedCol = fromCol;
         Piece movingPiece = board[fromRow][fromCol];
-
-        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
         movingPiece.setMoved();
-
-        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
         makeMove(toRow, toCol);
-
-        // 5. Städa upp brädet och byt tur
         clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
         endTurn();
     }
-
     private void clearEnPassant () {
         enPassantRow = -1;
         enPassantCol = -1;

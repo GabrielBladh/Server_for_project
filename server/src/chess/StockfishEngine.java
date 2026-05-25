@@ -49,14 +49,9 @@ public class StockfishEngine {
 
         switch (level.toLowerCase()) {
 
-            case "easy":
-                skillLevel = 1;
-                moveTime = 300;
-                break;
-
             case "medium":
                 skillLevel = 10;
-                moveTime = 1000;
+                moveTime = 500;
                 break;
 
             case "hard":
