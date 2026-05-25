@@ -4,6 +4,7 @@ import Game.Game;
 
 
 public class Chess implements Game {
+    private Player aiColor = Player.BLACK;
     private String difficultyLevel = "easy";
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
@@ -340,7 +341,7 @@ public class Chess implements Game {
               java.util.List<int[]> captureMoves = new java.util.ArrayList<>();
               for (int r = 0; r < 8; r++){
                   for (int c = 0; c < 8; c++){
-                      if (board[r][c].getOwner() == Player.BLACK){
+                      if (board[r][c].getOwner() == aiColor){
                           clearValidMoves();
                           checkMoves(r, c);
                           for (int tr = 0; tr < 8; tr++){
@@ -655,7 +656,10 @@ public class Chess implements Game {
     }
 
     public boolean isAITurn() {
-        return AIgame && currentPlayer == Player.BLACK;
+        return AIgame && currentPlayer == aiColor;
+    }
+    public void setAiColor(Player color){
+        this.aiColor = color;
     }
 
     public boolean checkIfKingChecked(Player currentPlayer) {
@@ -1207,6 +1211,12 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "../../stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
+            if(!difficultyLevel.equals("easy")){
+                engine.setDifficulty(difficultyLevel);
+            }
+            if (isAITurn()){
+                doComputerMove();
+            }
         }
     }
 

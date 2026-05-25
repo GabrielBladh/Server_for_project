@@ -7,6 +7,7 @@ import Game.Game;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
+import chess.Player;
 import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
@@ -66,16 +67,22 @@ public class ClientHandler implements Runnable {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
                 } else if (command.startsWith("Chess AI")) {
+                    System.out.println(command);
                     Chess aiGame = new Chess();
 
                     String level = "easy";
 
-                    if (command.contains("medium")) {
-                        level = "medium";
-                    } else if (command.contains("hard")) {
-                        level = "hard";
-                    } else if (command.contains("impossible")) { // <--- LÄGG TILL DETTA
-                        level = "impossible";
+                    if (command.contains("Medium")) {
+                        level = "Medium";
+                    } else if (command.contains("Hard")) {
+                        level = "Hard";
+                    } else if (command.contains("Impossible")) { // <--- LÄGG TILL DETTA
+                        level = "Impossible";
+                    }
+                    if (command.toLowerCase().contains("black")) {
+                        aiGame.setAiColor(Player.WHITE);
+                    } else {
+                        aiGame.setAiColor(Player.BLACK);
                     }
 
                     aiGame.setDifficultyLevel(level);
