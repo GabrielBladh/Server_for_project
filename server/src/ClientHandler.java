@@ -65,13 +65,25 @@ public class ClientHandler implements Runnable {
                 {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
-                } else if (command.equals("Chess AI")) {
+                } else if (command.startsWith("Chess AI")) {
                     Chess aiGame = new Chess();
+
+                    String level = "easy";
+
+                    if (command.contains("medium")) {
+                        level = "medium";
+                    } else if (command.contains("hard")) {
+                        level = "hard";
+                    } else if (command.contains("impossible")) { // <--- LÄGG TILL DETTA
+                        level = "impossible";
+                    }
+
+                    aiGame.setDifficultyLevel(level);
                     aiGame.setAI(true);
-                    aiGame.setDifficultyLevel("hard");
+
                     controller.setGame(aiGame);
-                    System.out.println("Chess AI started");
-                }  else if (command.equals("update")) {
+                    System.out.println("Chess AI started with level: " + level);
+                }else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();

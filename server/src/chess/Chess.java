@@ -1222,6 +1222,19 @@ public class Chess implements Game {
             doBeginnerMove();
             return;
         }
+
+        if (difficultyLevel.equals("medium")) {
+            int chance = (int)(Math.random() * 10) + 1;
+
+            if (chance <= 8) {
+                System.out.println("🤖 Medium AI: Spelar som nybörjare (Slump: " + chance + ")");
+                doBeginnerMove();
+                return;
+            }
+            else {
+                System.out.println("🧠 Medium AI: Blixtrar till och använder Stockfish! (Slump: " + chance + ")");
+            }
+        }
         new Thread(() -> {
             try {
                 String fen = getFEN();
