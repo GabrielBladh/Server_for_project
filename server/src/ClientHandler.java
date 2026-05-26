@@ -7,6 +7,7 @@ import Game.Game;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
+import chess.Player;
 import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
@@ -65,13 +66,31 @@ public class ClientHandler implements Runnable {
                 {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
-                } else if (command.equals("Chess AI")) {
+                } else if (command.startsWith("Chess AI")) {
+                    System.out.println(command);
                     Chess aiGame = new Chess();
+
+                    String level = "easy";
+
+                    if (command.contains("Medium")) {
+                        level = "Medium";
+                    } else if (command.contains("Hard")) {
+                        level = "Hard";
+                    } else if (command.contains("Impossible")) { // <--- LÄGG TILL DETTA
+                        level = "Impossible";
+                    }
+                    if (command.toLowerCase().contains("black")) {
+                        aiGame.setAiColor(Player.WHITE);
+                    } else {
+                        aiGame.setAiColor(Player.BLACK);
+                    }
+
+                    aiGame.setDifficultyLevel(level);
                     aiGame.setAI(true);
-                    aiGame.setDifficultyLevel("easy");
+
                     controller.setGame(aiGame);
-                    System.out.println("Tic Tac Toe AI started");
-                }  else if (command.equals("update")) {
+                    System.out.println("Chess AI started with level: " + level);
+                }else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();

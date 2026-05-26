@@ -4,6 +4,7 @@ import Game.Game;
 
 
 public class Chess implements Game {
+    private Player aiColor = Player.BLACK;
     private String difficultyLevel = "easy";
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
@@ -340,7 +341,7 @@ public class Chess implements Game {
               java.util.List<int[]> captureMoves = new java.util.ArrayList<>();
               for (int r = 0; r < 8; r++){
                   for (int c = 0; c < 8; c++){
-                      if (board[r][c].getOwner() == Player.BLACK){
+                      if (board[r][c].getOwner() == aiColor){
                           clearValidMoves();
                           checkMoves(r, c);
                           for (int tr = 0; tr < 8; tr++){
@@ -655,7 +656,10 @@ public class Chess implements Game {
     }
 
     public boolean isAITurn() {
-        return AIgame && currentPlayer == Player.BLACK;
+        return AIgame && currentPlayer == aiColor;
+    }
+    public void setAiColor(Player color){
+        this.aiColor = color;
     }
 
     public boolean checkIfKingChecked(Player currentPlayer) {
@@ -1207,8 +1211,11 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "../../stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
-            if (!difficultyLevel.equals("easy")){
+            if(!difficultyLevel.equals("easy")){
                 engine.setDifficulty(difficultyLevel);
+            }
+            if (isAITurn()){
+                doComputerMove();
             }
         }
     }
@@ -1225,6 +1232,19 @@ public class Chess implements Game {
             doBeginnerMove();
             return;
         }
+
+        if (difficultyLevel.equals("medium")) {
+            int chance = (int)(Math.random() * 10) + 1;
+
+            if (chance <= 8) {
+                System.out.println("🤖 Medium AI: Spelar som nybörjare (Slump: " + chance + ")");
+                doBeginnerMove();
+                return;
+            }
+            else {
+                System.out.println("🧠 Medium AI: Blixtrar till och använder Stockfish! (Slump: " + chance + ")");
+            }
+        }
         new Thread(() -> {
             try {
                 String fen = getFEN();
@@ -1234,19 +1254,24 @@ public class Chess implements Game {
                 String bestMove = engine.getBestMove(fen);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                if (bestMove != null && bestMove.length() >= 4) {
+                // --- SPÄRR FÖR SCHACKMATT MÅSTE VARA MED HÄR ---
+                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
+                    System.out.println("🏆 SCHACKMATT! Stockfish har inga drag.");
+                    setIsGameEnded();
+                    return;
+                }
+
+                if (bestMove.length() >= 4) {
                     int fromCol = 7 -(bestMove.charAt(0) - 'a');
                     int toCol = 7 - (bestMove.charAt(2) - 'a');
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    // 1. Spara AI:ns önskade drag i minnet
                     aiPendingFromRow = fromRow;
                     aiPendingFromCol = fromCol;
                     aiPendingToRow = toRow;
                     aiPendingToCol = toCol;
 
-                    // 2. Tänd LED-lamporna så människan ser draget!
                     clearValidMoves();
                     validMove[fromRow][fromCol] = "B"; // Lyser upp startrutan (Blå)
                     validMove[toRow][toCol] = "R";     // Lyser upp målrutan (Röd)
@@ -1256,26 +1281,19 @@ public class Chess implements Game {
                 System.out.println("Fel i AI-tråden: " + e.getMessage());
             }
         }).start();
-    }
-    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
+    }    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        // 1. Hämta pjäsen som Stockfish vill flytta
+        selectedRow = fromRow;
+        selectedCol = fromCol;
         Piece movingPiece = board[fromRow][fromCol];
-
-        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
         movingPiece.setMoved();
-
-        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
         makeMove(toRow, toCol);
-
-        // 5. Städa upp brädet och byt tur
         clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
         endTurn();
     }
-
     private void clearEnPassant () {
         enPassantRow = -1;
         enPassantCol = -1;

@@ -14,6 +14,8 @@ public class StockfishEngine {
     // Svårighetsgrader
     private int skillLevel = 10;
     private int moveTime = 1000;
+    private boolean useElo = false;
+    private int elo = 1320;
 
     // Starta Stockfish
     public boolean startEngine(String path) {
@@ -33,7 +35,7 @@ public class StockfishEngine {
             sendCommand("uci");
             waitFor("uciok");
 
-            setSkillLevel(skillLevel);
+            applySettings();
 
             return true;
 
@@ -49,28 +51,39 @@ public class StockfishEngine {
 
         switch (level.toLowerCase()) {
 
-            case "easy":
-                skillLevel = 1;
-                moveTime = 300;
-                break;
-
             case "medium":
                 skillLevel = 10;
-                moveTime = 1000;
+                useElo = true;
+                elo = 2000;
+                moveTime = 1500;
                 break;
 
             case "hard":
-                skillLevel = 20;
+                skillLevel = 15;
+                useElo = true;
+                elo = 2500;
                 moveTime = 2500;
                 break;
 
+            case "impossible":
+                skillLevel  =20;
+                useElo = false; // man stänger av Elo-begränsing så blir det på max
+                moveTime = 3000;
+                break;
+            case "easy":
             default:
                 skillLevel = 10;
                 moveTime = 1000;
                 break;
         }
-
-        setSkillLevel(skillLevel);
+        applySettings();
+    }
+    private void applySettings(){
+        sendCommand("setoption name Skill level value " + skillLevel );
+        sendCommand("setoption name UCI_LimitStrength value " + useElo);
+        if(useElo){
+            sendCommand("setoption name UCI_Elo value " + elo);
+        }
     }
 
     // Skickar skill level till Stockfish
