@@ -4,6 +4,8 @@ import Game.Game;
 
 
 public class Chess implements Game {
+    private Player aiColor = Player.BLACK;
+    private String difficultyLevel = "easy";
     private boolean AIgame = false; // Från dig
     private StockfishEngine engine; // Från dig
     private Player currentPlayer = Player.WHITE;
@@ -271,60 +273,111 @@ public class Chess implements Game {
                     (validMove[row][col].equals("G") || validMove[row][col].equals("R")))
             {
 
-                board[selectedRow][selectedCol].setMoved();
-                int fromRow = selectedRow;
-                int fromCol = selectedCol;
-
-                if (isEnPassant(fromRow, fromCol, row, col)) {
-                    executeEnPassant(row, col);
-                }
-
-                Piece movingPiece = board[fromRow][fromCol];
-                if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
-                        movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
-                    if (col > selectedCol) {
-                        Piece rook = board[selectedRow][selectedCol + 4];
-                        board[selectedRow][selectedCol + 1] = rook;
-                        board[selectedRow][selectedCol + 4] = emptySpace;
-                        rook.setMoved();
-                    } else {
-                        Piece rook = board[selectedRow][selectedCol - 3];
-                        board[selectedRow][selectedCol - 1] = rook;
-                        board[selectedRow][selectedCol - 3] = emptySpace;
-                        rook.setMoved();
-                    }
-                }
-
-                board[row][col] = movingPiece;
-                board[fromRow][fromCol] = emptySpace;
-                if (movingPiece.getPiece() == PieceType.BONDE &&
-                        (row == 0 || row == 7))
-                {
-                    promotionMode = true;
-
-                    promotionRow = row;
-                    promotionCol = col;
-
-                    clearValidMoves();
-
-                    markChangeBondeValid();
-
-                    return true;
-                }
-
-                clearValidMoves();
-                clearEnPassant();
-                registerEnPassant(fromRow, fromCol, row, col);
-
-                selectedRow = -1;
-                selectedCol = -1;
-
-                endTurn();
-                return true;
+                makeMove(row, col);
+                if (!promotionMode) {
+                    endTurn();
+                }                return true;
             }
             return false;
         }
         return false;
+    }
+
+    public void makeMove(int row, int col) {
+        board[selectedRow][selectedCol].setMoved();
+        int fromRow = selectedRow;
+        int fromCol = selectedCol;
+
+        if (isEnPassant(fromRow, fromCol, row, col)) {
+            executeEnPassant(row, col);
+        }
+
+        Piece movingPiece = board[fromRow][fromCol];
+        if (movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 2 ||
+                movingPiece.getPiece() == PieceType.KUNG && Math.abs(col - selectedCol) == 3) {
+            if (col > selectedCol) {
+                Piece rook = board[selectedRow][selectedCol + 4];
+                board[selectedRow][selectedCol + 1] = rook;
+                board[selectedRow][selectedCol + 4] = emptySpace;
+                rook.setMoved();
+            } else {
+                Piece rook = board[selectedRow][selectedCol - 3];
+                board[selectedRow][selectedCol - 1] = rook;
+                board[selectedRow][selectedCol - 3] = emptySpace;
+                rook.setMoved();
+            }
+        }
+
+        board[row][col] = movingPiece;
+        board[fromRow][fromCol] = emptySpace;
+        if (movingPiece.getPiece() == PieceType.BONDE &&
+                (row == 0 || row == 7))
+        {
+            promotionMode = true;
+            promotionRow = row;
+            promotionCol = col;
+
+            clearValidMoves();
+            markChangeBondeValid();
+        } else {
+            clearValidMoves();
+        }
+
+        clearEnPassant();
+        registerEnPassant(fromRow, fromCol, row, col);
+
+        selectedRow = -1;
+        selectedCol = -1;
+    }
+    private void doBeginnerMove(){
+      new  Thread(() ->{
+          try{
+              Thread.sleep(1500);
+              java.util.List<int[]> possibleMoves = new java.util.ArrayList<>();
+              java.util.List<int[]> captureMoves = new java.util.ArrayList<>();
+              for (int r = 0; r < 8; r++){
+                  for (int c = 0; c < 8; c++){
+                      if (board[r][c].getOwner() == aiColor){
+                          clearValidMoves();
+                          checkMoves(r, c);
+                          for (int tr = 0; tr < 8; tr++){
+                              for (int tc = 0; tc < 8; tc++){
+                                if ("G".equals((validMove[tr][tc]))){
+                                    possibleMoves.add(new int[]{r, c, tr, tc});
+                                }
+                                else if ("R".equals(validMove[tr][tc])){
+                                    captureMoves.add(new int[]{r, c,tr, tc});
+                                }
+                              }
+                          }
+                      }
+                  }
+              }
+              clearValidMoves();
+              if(possibleMoves.isEmpty() && captureMoves.isEmpty()){
+                  setIsGameEnded();
+                  return;
+              }
+              int [] selectedMove;
+              java.util.Random rand = new java.util.Random();
+
+              if(!captureMoves.isEmpty()){
+                  //egen ai tar motstånds pjäs
+                  selectedMove = captureMoves.get(rand.nextInt(captureMoves.size()));
+              } else{
+                  //flyttar slumpm'ssig drag
+                  selectedMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+              }
+              aiPendingFromRow = selectedMove[0];
+              aiPendingFromCol = selectedMove[1];
+              aiPendingToRow = selectedMove [2];
+              aiPendingToCol = selectedMove[3];
+              validMove[aiPendingFromRow][aiPendingFromCol] = "B";
+              validMove[aiPendingToRow][aiPendingToCol] = "R";
+          } catch (Exception e){
+                System.out.println("Fel i nybörjare-AI " + e.getMessage());
+            }
+    }).start();
     }
 
     public void checkMoves(int row, int col) {
@@ -603,7 +656,10 @@ public class Chess implements Game {
     }
 
     public boolean isAITurn() {
-        return AIgame && currentPlayer == Player.BLACK;
+        return AIgame && currentPlayer == aiColor;
+    }
+    public void setAiColor(Player color){
+        this.aiColor = color;
     }
 
     public boolean checkIfKingChecked(Player currentPlayer) {
@@ -1063,7 +1119,7 @@ public class Chess implements Game {
         // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
         for (int row = 7; row >= 0; row--) {
             int emptySquares = 0;
-            for (int col = 0; col < 8; col++) {
+            for (int col = 7; col >= 0; col--) {
                 Piece currentPiece = board[row][col];
 
                 if (currentPiece.getPiece() == PieceType.NONE) {
@@ -1089,7 +1145,36 @@ public class Chess implements Game {
 
         // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
         // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
-        fen.append("KQkq ");
+        String rockadMöjligt = "";
+
+        if (board[0][3].getPiece() == PieceType.KUNG && !board[0][3].getisMoved()) {
+
+            if (board[0][0].getPiece() == PieceType.TORN && !board[0][0].getisMoved()) {
+                rockadMöjligt += "Q";
+            }
+
+            if (board[0][7].getPiece() == PieceType.TORN && !board[0][7].getisMoved()) {
+                rockadMöjligt += "K";
+            }
+        }
+
+        if (board[7][3].getPiece() == PieceType.KUNG && !board[7][3].getisMoved()) {
+
+            if (board[7][0].getPiece() == PieceType.TORN && !board[7][0].getisMoved()) {
+                rockadMöjligt += "q";
+            }
+
+
+            if (board[7][7].getPiece() == PieceType.TORN && !board[7][7].getisMoved()) {
+                rockadMöjligt += "k";
+            }
+        }
+
+        if (rockadMöjligt.isEmpty()) {
+            rockadMöjligt = "-";
+        }
+
+        fen.append(rockadMöjligt).append(" ");
 
         // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
         fen.append("- ");
@@ -1126,10 +1211,40 @@ public class Chess implements Game {
             engine = new StockfishEngine();
             String macPath = "../../stockfish/stockfish-macos-m1-apple-silicon";
             engine.startEngine(macPath);
+            if(!difficultyLevel.equals("easy")){
+                engine.setDifficulty(difficultyLevel);
+            }
+            if (isAITurn()){
+                doComputerMove();
+            }
         }
     }
 
+    public void setDifficultyLevel(String level){
+        this.difficultyLevel = level.toLowerCase().trim();
+        if (engine != null){
+            engine.setDifficulty(this.difficultyLevel);
+        }
+        System.out.println("Spelets svårighetsgrad har uppdaterats till: " + this.difficultyLevel);
+    }
     private void doComputerMove() {
+        if (difficultyLevel.equals("easy")){
+            doBeginnerMove();
+            return;
+        }
+
+        if (difficultyLevel.equals("medium")) {
+            int chance = (int)(Math.random() * 10) + 1;
+
+            if (chance <= 8) {
+                System.out.println("🤖 Medium AI: Spelar som nybörjare (Slump: " + chance + ")");
+                doBeginnerMove();
+                return;
+            }
+            else {
+                System.out.println("🧠 Medium AI: Blixtrar till och använder Stockfish! (Slump: " + chance + ")");
+            }
+        }
         new Thread(() -> {
             try {
                 String fen = getFEN();
@@ -1139,19 +1254,24 @@ public class Chess implements Game {
                 String bestMove = engine.getBestMove(fen);
                 System.out.println("Stockfish säger: " + bestMove);
 
-                if (bestMove != null && bestMove.length() >= 4) {
-                    int fromCol = bestMove.charAt(0) - 'a';
-                    int toCol = bestMove.charAt(2) - 'a';
+                // --- SPÄRR FÖR SCHACKMATT MÅSTE VARA MED HÄR ---
+                if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
+                    System.out.println("🏆 SCHACKMATT! Stockfish har inga drag.");
+                    setIsGameEnded();
+                    return;
+                }
+
+                if (bestMove.length() >= 4) {
+                    int fromCol = 7 -(bestMove.charAt(0) - 'a');
+                    int toCol = 7 - (bestMove.charAt(2) - 'a');
                     int fromRow = Character.getNumericValue(bestMove.charAt(1)) - 1;
                     int toRow = Character.getNumericValue(bestMove.charAt(3)) - 1;
 
-                    // 1. Spara AI:ns önskade drag i minnet
                     aiPendingFromRow = fromRow;
                     aiPendingFromCol = fromCol;
                     aiPendingToRow = toRow;
                     aiPendingToCol = toCol;
 
-                    // 2. Tänd LED-lamporna så människan ser draget!
                     clearValidMoves();
                     validMove[fromRow][fromCol] = "B"; // Lyser upp startrutan (Blå)
                     validMove[toRow][toCol] = "R";     // Lyser upp målrutan (Röd)
@@ -1161,29 +1281,19 @@ public class Chess implements Game {
                 System.out.println("Fel i AI-tråden: " + e.getMessage());
             }
         }).start();
-    }
-    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
+    }    public void placeTileAI(int fromRow, int fromCol, int toRow, int toCol) {
         if (isGameEnded()) return;
 
-        // 1. Hämta pjäsen som Stockfish vill flytta
+        selectedRow = fromRow;
+        selectedCol = fromCol;
         Piece movingPiece = board[fromRow][fromCol];
-
-        // 2. Sätt att den har rört sig (viktigt för bönder och rockad)
         movingPiece.setMoved();
-
-        // 3. Flytta pjäsen till den nya rutan (om det står en motståndare där, skrivs den över!)
-        board[toRow][toCol] = movingPiece;
-
-        // 4. Töm den gamla rutan där pjäsen stod innan
-        board[fromRow][fromCol] = emptySpace;
-
-        // 5. Städa upp brädet och byt tur
+        makeMove(toRow, toCol);
         clearValidMoves();
         selectedRow = -1;
         selectedCol = -1;
         endTurn();
     }
-
     private void clearEnPassant () {
         enPassantRow = -1;
         enPassantCol = -1;

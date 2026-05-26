@@ -7,6 +7,7 @@ import Game.Game;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
+import chess.Player;
 import tictactoe.TicTacToe;
 
 public class ClientHandler implements Runnable {
@@ -36,7 +37,6 @@ public class ClientHandler implements Runnable {
                     socket.close();
                     break;
                 }
-                System.out.println("Request: " + command);
 
                 if (command.equals("Checkers")) {
                     controller.setGame(new Checkers());
@@ -66,41 +66,60 @@ public class ClientHandler implements Runnable {
                 {
                     controller.setGame(new Chess());
                     System.out.println("Chess started");
-                } else if (command.equals("Chess AI")) {
+                } else if (command.startsWith("Chess AI")) {
+                    System.out.println(command);
                     Chess aiGame = new Chess();
+
+                    String level = "easy";
+
+                    if (command.contains("Medium")) {
+                        level = "Medium";
+                    } else if (command.contains("Hard")) {
+                        level = "Hard";
+                    } else if (command.contains("Impossible")) { // <--- LÄGG TILL DETTA
+                        level = "Impossible";
+                    }
+                    if (command.toLowerCase().contains("black")) {
+                        aiGame.setAiColor(Player.WHITE);
+                    } else {
+                        aiGame.setAiColor(Player.BLACK);
+                    }
+
+                    aiGame.setDifficultyLevel(level);
                     aiGame.setAI(true);
+
                     controller.setGame(aiGame);
-                    System.out.println("Tic Tac Toe AI started");
-                }  else if (command.equals("update")) {
+                    System.out.println("Chess AI started with level: " + level);
+                }else if (command.equals("update")) {
                     if (controller.getGame() == null){
-                        System.out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
                         continue;
                     }
                     String response = controller.getGame().getGameStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
                 }
                 else if (command.equals("update_blink")) {
                     if (controller.getGame() == null){
-                        System.out.println("0000000000000000000000000000000000000000000000000000000000000000");
                         out.println("0000000000000000000000000000000000000000000000000000000000000000");
                         out.flush();
                         continue;
                     }
                     String response = controller.getGame().getGameEnd();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
 
                 }
 
                 else if (command.equals("update_chess")){
+                    if (controller.getGame() == null){
+                        out.println("0000000000000000000000000000000000000000000000000000000000000000");
+                        out.flush();
+                        continue;
+                    }
                     String response = controller.getGame().getBoardStatus();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }
@@ -112,7 +131,6 @@ public class ClientHandler implements Runnable {
                         continue;
                     }
                     String response = controller.getGame().getTurn();
-                    System.out.println("Response: " + response);
                     out.println(response);
                     out.flush();
                 }

@@ -369,7 +369,11 @@ public class Checkers implements Game {
         StringBuilder boardStatus = new StringBuilder();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                if (board[row][col] == null) {
+                // Om spelet är slut, och denna ruta ska blinka, skicka '1'
+                if (isGameEnded && blinkBoard[row][col].equals("1")) {
+                    boardStatus.append("1");
+                }
+                else if (board[row][col] == null) {
                     boardStatus.append("N");
                 } else {
                     boardStatus.append(board[row][col]);
@@ -378,7 +382,6 @@ public class Checkers implements Game {
         }
         return boardStatus.toString();
     }
-
     public void setupGame() {
         board[0][1] = "B";
         board[0][3] = "B";
