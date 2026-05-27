@@ -76,8 +76,10 @@ public class ClientHandler implements Runnable {
                         level = "Medium";
                     } else if (command.contains("Hard")) {
                         level = "Hard";
-                    } else if (command.contains("Impossible")) { // <--- LÄGG TILL DETTA
+                    } else if (command.contains("Impossible")) {
                         level = "Impossible";
+                    } else if (command.toLowerCase().contains("joakim")) { 
+                        level = "joakim";
                     }
                     if (command.toLowerCase().contains("black")) {
                         aiGame.setAiColor(Player.WHITE);
