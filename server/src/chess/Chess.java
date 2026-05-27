@@ -9,16 +9,16 @@ import Game.Game;
 public class Chess implements Game {
     private Player aiColor = Player.BLACK;
     private String difficultyLevel = "easy";
-    private boolean AIgame = false; // Från dig
-    private StockfishEngine engine; // Från dig
+    private boolean AIgame = false;
+    private StockfishEngine engine;
     private Player currentPlayer = Player.WHITE;
     private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private int enPassantRow = -1; // Från din kompis
-    private int enPassantCol = -1; // Från din kompis
-    private Player enPassantOwner = Player.NONE; // Från din kompis
+    private int enPassantRow = -1;
+    private int enPassantCol = -1;
+    private Player enPassantOwner = Player.NONE;
     private String[][] validMove = new String[8][8];
     private boolean promotionMode = false;
     private int promotionRow = -1;
@@ -291,7 +291,8 @@ public class Chess implements Game {
                 makeMove(row, col);
                 if (!promotionMode) {
                     endTurn();
-                }                return true;
+                }
+                return true;
             }
             return false;
         }
@@ -1140,7 +1141,6 @@ public class Chess implements Game {
         StringBuilder fen = new StringBuilder();
 
         // 1. Läs av brädet (Från rad 7 ner till rad 0)
-        // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
         for (int row = 7; row >= 0; row--) {
             int emptySquares = 0;
             for (int col = 7; col >= 0; col--) {
@@ -1167,8 +1167,6 @@ public class Chess implements Game {
         // 2. Lägg till vems tur det är
         fen.append(currentPlayer == Player.WHITE ? " w " : " b ");
 
-        // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
-        // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
         String rockadMöjligt = "";
 
         if (board[0][3].getPiece() == PieceType.KUNG && !board[0][3].getisMoved()) {
@@ -1200,10 +1198,8 @@ public class Chess implements Game {
 
         fen.append(rockadMöjligt).append(" ");
 
-        // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
         fen.append("- ");
 
-        // 5. Halvdragsklocka och fullt dragnummer (Vi hårdkodar 0 1 för tillfället)
         fen.append("0 1");
 
         return fen.toString();
