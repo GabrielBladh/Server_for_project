@@ -3,7 +3,7 @@ import Game.Game;
 /**
  * Huvudklassen för Schackspelet. Hanterar spelregler, brädets uppdateringar,
  * och synkronisering mellan den fysiska spelaren och AI-motorn.
- * * @author Ali Sojod & Gabriel Bladh
+ * * @author Ali Sojod & Gabriel Bladh & Matilda Råstam
  */
 
 public class Chess implements Game {
