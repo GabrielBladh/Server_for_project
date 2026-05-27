@@ -1,6 +1,13 @@
 package checkers;
 import Game.Game;
 
+/**
+ * Hanterar den centrala spellogiken för dam.
+ * Håller koll på spelbrädet, spelarnas turer, giltiga drag och när spelet är slut.
+ *
+ * @author Ali Sojod
+ * @date 2026-04-17
+ */
 public class Checkers implements Game {
 
     String[][] board = new String[8][8];
@@ -18,6 +25,9 @@ public class Checkers implements Game {
     boolean multiJumpActive = false;
     boolean AIgame = false;
 
+    /**
+     * Konstruktor som sätter upp startbrädet och nollställer blink-effekterna.
+     */
     public Checkers() {
         setupGame();
         for (int r = 0; r < 8; r++) {
@@ -27,34 +37,44 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Ställer in om spelet spelas mot datorn (AI) eller en annan människa.
+     * * @param AIgame true om motståndaren är AI, annars false.
+     */
     public void setAI(boolean AIgame) {
         this.AIgame = AIgame;
     }
 
+    /**
+     * Hämtar brädets nuvarande status som en sträng.
+     * (Krävs av Game-interfacet)
+     * * @return En tom sträng i denna implementation.
+     */
     public String getBoardStatus(){
         return "";
     }
 
     @Override
     public void setGameStatus(String gameStatus) {
-
     }
 
     @Override
     public void setBoardStatus(String boardStatus) {
-
     }
 
     @Override
     public void setTurn(String turn) {
-
     }
 
     @Override
     public void setGameEnd(String gameEnd) {
-
     }
 
+    /**
+     * Avslutar den nuvarande spelarens tur och skickar över turen till motståndaren.
+     * Kontrollerar också om nästa spelare har några giltiga drag, annars utses en vinnare.
+     * Om motståndaren är AI, utlöses dess drag här.
+     */
     public void endTurn(){
         if (currentPlayer.equals("B")) {
             currentPlayer = "R";
@@ -62,6 +82,7 @@ public class Checkers implements Game {
         else {
             currentPlayer = "B";
         }
+
         if (!hasValidMoves(currentPlayer)){
             if (currentPlayer.equals("B")){
                 setWinner("R");
@@ -74,10 +95,19 @@ public class Checkers implements Game {
             CheckersAI.doComputerMove(this);
         }
     }
+
+    /**
+     * Hämtar vilken spelare som har turen just nu.
+     * * @return "B" (Blå) eller "R" (Röd).
+     */
     public String getTurn(){
         return currentPlayer;
     }
 
+    /**
+     * Hämtar information om vilka rutor som ska blinka när spelet är slut.
+     * * @return En sträng som representerar blink-brädet.
+     */
     @Override
     public String getGameEnd() {
         StringBuilder statusEnd = new StringBuilder();
@@ -89,11 +119,22 @@ public class Checkers implements Game {
         return statusEnd.toString();
     }
 
+    /**
+     * Kontrollerar om spelet har avslutats.
+     * * @return true om någon har vunnit, annars false.
+     */
     @Override
     public boolean isGameEnded() {
         return isGameEnded;
     }
 
+    /**
+     * Kärnlogiken för att spela! Hanterar när en spelare klickar på brädet.
+     * Väljer antingen en pjäs att flytta, eller flyttar en redan vald pjäs.
+     * * @param row Raden som klickades på.
+     * @param col Kolumnen som klickades på.
+     * @return true om åtgärden lyckades eller klicket var giltigt, annars false.
+     */
     public boolean placeTile(int row, int col) {
         if (isGameEnded) {
             return false;
@@ -115,7 +156,6 @@ public class Checkers implements Game {
             selectedCol = col;
             selectedPiece = board[row][col];
 
-            // Kollar om spelaren är tvingad att hoppa
             boolean mustJump = doesPlayerHaveAnyJump(currentPlayer);
             checkMoves(row, col, selectedPiece, mustJump);
             return true;
@@ -185,6 +225,12 @@ public class Checkers implements Game {
         return false;
     }
 
+    /**
+     * Kontrollerar om en pjäs har nått andra sidan brädet och ska krönas till dam (kung).
+     * * @param row Nuvarande rad för pjäsen.
+     * @param col Nuvarande kolumn för pjäsen.
+     * @return true om pjäsen kröntes, annars false.
+     */
     private boolean checkPromotion(int row, int col) {
         if (board[row][col] == null) return false;
 
@@ -198,6 +244,13 @@ public class Checkers implements Game {
         return false;
     }
 
+    /**
+     * Hittar och markerar alla möjliga rutor som en specifik pjäs kan flytta till.
+     * * @param row Pjäsens rad.
+     * @param col Pjäsens kolumn.
+     * @param piece Pjäsens typ ("B", "R", "M", "D").
+     * @param onlyJumps Om true, markeras enbart hopp över motståndare.
+     */
     public void checkMoves(int row, int col, String piece, boolean onlyJumps) {
         boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
         boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
@@ -232,6 +285,11 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Går igenom spelarens alla pjäser och kollar om det finns ett "tvingat" hopp någonstans på brädet.
+     * * @param player Spelaren att kontrollera ("B" eller "R").
+     * @return true om ett hopp finns tillgängligt, annars false.
+     */
     private boolean doesPlayerHaveAnyJump(String player){
         for (int r = 0; r < 8; r++){
             for (int c = 0; c < 8; c++){
@@ -250,6 +308,13 @@ public class Checkers implements Game {
         return false;
     }
 
+    /**
+     * Kontrollerar om en specifik pjäs har möjlighet att hoppa över en motståndare.
+     * * @param row Rad för pjäsen.
+     * @param col Kolumn för pjäsen.
+     * @param piece Vilken sorts pjäs det är.
+     * @return true om ett hopp är möjligt, annars false.
+     */
     private boolean canJump(int row, int col, String piece){
         boolean canMoveDown = piece.equals("B") || piece.equals("M") || piece.equals("D");
         boolean canMoveUp = piece.equals("R") || piece.equals("M") || piece.equals("D");
@@ -269,6 +334,16 @@ public class Checkers implements Game {
         return false;
     }
 
+    /**
+     * Hjälpmetod för att se om ett specifikt hopp över en motståndare faktiskt är lagligt.
+     * * @param midRow Raden där motståndaren står.
+     * @param midCol Kolumnen där motståndaren står.
+     * @param endRow Raden man landar på.
+     * @param endCol Kolumnen man landar på.
+     * @param oppNormal Motståndarens normala pjäs-sträng.
+     * @param oppKing Motståndarens dam/kung-sträng.
+     * @return true om draget är en laglig tillfångatagning.
+     */
     private boolean isValidCapture(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
         if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
             String middleSquare = board[midRow][midCol];
@@ -280,6 +355,12 @@ public class Checkers implements Game {
         return false;
     }
 
+    /**
+     * Kontrollerar om spelaren överhuvudtaget kan göra något giltigt drag på brädet.
+     * Används för att avgöra om spelaren har förlorat.
+     * * @param player Vilken spelare som ska kontrolleras.
+     * @return true om ett drag finns, annars false.
+     */
     private boolean hasValidMoves(String player){
         boolean hasMove = false;
         for (int r = 0; r < 8; r++){
@@ -307,6 +388,9 @@ public class Checkers implements Game {
         return hasMove;
     }
 
+    /**
+     * Städar upp brädet från "G" (Ghosts) som visar var spelaren kan flytta.
+     */
     private void clearValidMoves(){
         for (int r = 0; r < 8; r++){
             for (int c = 0; c < 8; c++ ){
@@ -317,6 +401,11 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Om en ruta är tom, markeras den med "G" för att visa att det är ett giltigt drag.
+     * * @param r Rutan rad.
+     * @param c Rutan kolumn.
+     */
     private void markIfValid(int r, int c) {
         if (r >= 0 && r < 8 && c >= 0 && c < 8) {
             if (board[r][c] == null) {
@@ -325,6 +414,11 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Håller koll på hur många pjäser varje lag har kvar, och drar av poäng
+     * från motståndaren till den som precis gjorde ett drag.
+     * * @param currentPlayer Spelaren som precis tog en pjäs.
+     */
     private void scoreTracker(String currentPlayer){
         if (currentPlayer.equals("B")){
             redCounter--;
@@ -334,6 +428,9 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Om det finns en fiende i mitten och plats bakom, markeras landningsrutan med ett "G".
+     */
     private void markCaptureIfValid(int midRow, int midCol, int endRow, int endCol, String oppNormal, String oppKing){
         if (endRow >= 0 && endRow < 8 && endCol >= 0 && endCol < 8){
             String middleSquare = board[midRow][midCol];
@@ -344,6 +441,9 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Avgör om spelet ska ta slut baserat på att ett av lagen förlorat alla pjäser.
+     */
     private void checkWinByCounters(){
         if(redCounter == 0){
             setWinner("B");
@@ -353,6 +453,10 @@ public class Checkers implements Game {
         }
     }
 
+    /**
+     * Sätter vinnaren i spelet och aktiverar en speciell ljus/blink-kombination.
+     * * @param winner Vinnarens sträng-ID.
+     */
     private void setWinner(String winner) {
         for (int r = 1; r <= 5; r++) {
             blinkBoard[r][1] = "1";
@@ -365,11 +469,15 @@ public class Checkers implements Game {
         isGameEnded = true;
     }
 
+    /**
+     * Konverterar och hämtar brädets layout och vinst-effekter till en enda sträng.
+     * Används typiskt av spelservern för att rita upp brädet hos klienten.
+     * * @return En sträng av alla rutor.
+     */
     public String getGameStatus() {
         StringBuilder boardStatus = new StringBuilder();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                // Om spelet är slut, och denna ruta ska blinka, skicka '1'
                 if (isGameEnded && blinkBoard[row][col].equals("1")) {
                     boardStatus.append("1");
                 }
@@ -382,6 +490,10 @@ public class Checkers implements Game {
         }
         return boardStatus.toString();
     }
+
+    /**
+     * Placerar ut alla startpjäser på rätt positioner för att starta ett nytt parti.
+     */
     public void setupGame() {
         board[0][1] = "B";
         board[0][3] = "B";
@@ -409,6 +521,10 @@ public class Checkers implements Game {
         board[5][6] = "R";
     }
 
+    /**
+     * Kollar om det är AI:ns tur att spela.
+     * * @return true om AI:n är aktiv och röd spelare ("R") har turen.
+     */
     public boolean isAITurn() {
         return AIgame && currentPlayer.equals("R");
     }

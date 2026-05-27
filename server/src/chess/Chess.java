@@ -1,21 +1,24 @@
 package chess;
 import Game.Game;
-
-
+/**
+ * Huvudklassen för Schackspelet. Hanterar spelregler, brädets uppdateringar,
+ * och synkronisering mellan den fysiska spelaren och AI-motorn.
+ * * @author Ali Sojod & Gabriel Bladh
+ */
 
 public class Chess implements Game {
     private Player aiColor = Player.BLACK;
     private String difficultyLevel = "easy";
-    private boolean AIgame = false; // Från dig
-    private StockfishEngine engine; // Från dig
+    private boolean AIgame = false;
+    private StockfishEngine engine;
     private Player currentPlayer = Player.WHITE;
     private static final Piece emptySpace = new Piece(Player.NONE, PieceType.NONE);
     private Piece[][] board = new Piece[8][8];
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private int enPassantRow = -1; // Från din kompis
-    private int enPassantCol = -1; // Från din kompis
-    private Player enPassantOwner = Player.NONE; // Från din kompis
+    private int enPassantRow = -1;
+    private int enPassantCol = -1;
+    private Player enPassantOwner = Player.NONE;
     private String[][] validMove = new String[8][8];
     private boolean promotionMode = false;
     private int promotionRow = -1;
@@ -67,7 +70,10 @@ public class Chess implements Game {
     public Chess() {
         StartGame();
     }
-
+    /**
+     * Startar spelet och placerar ut alla pjäser på deras standardpositioner.
+     * * @author Gabriel Bladh
+     */
     public void StartGame() {
         board[0][0] = new Piece(Player.WHITE, PieceType.TORN);
         board[0][1] = new Piece(Player.WHITE, PieceType.HÄST);
@@ -198,7 +204,12 @@ public class Chess implements Game {
         return validMovesStringBuilder;
     }
 
-
+    /**
+     * Försöker placera eller markera en pjäs utifrån koordinater från Android-appen.
+     * Hanterar även AI:ns drag och bondeförvandling.
+     * * @return true om trycket var giltigt och hanterades, annars false.
+     * @author Gabriel Bladh
+     */
     @Override
     public boolean placeTile(int row, int col)
     {
@@ -276,7 +287,8 @@ public class Chess implements Game {
                 makeMove(row, col);
                 if (!promotionMode) {
                     endTurn();
-                }                return true;
+                }
+                return true;
             }
             return false;
         }
@@ -329,6 +341,11 @@ public class Chess implements Game {
         selectedRow = -1;
         selectedCol = -1;
     }
+    /**
+     * Vår egenutvecklade "Greedy Random"-AI för Easy-läget.
+     * Letar igenom brädet och prioriterar att slå en pjäs, annars drar den slumpmässigt.
+     * * @author Ali Sojod
+     */
     private void doBeginnerMove(){
       new  Thread(() ->{
           try{
@@ -379,7 +396,10 @@ public class Chess implements Game {
             }
     }).start();
     }
-
+    /**
+     * Beräknar var en pjäs får gå enligt schackreglerna.
+     * * @author Gabriel Bladh
+     */
     public void checkMoves(int row, int col) {
         //Hur bonde kan röra sig
         if (board[row][col].getPiece() == PieceType.BONDE) {
@@ -1111,12 +1131,16 @@ public class Chess implements Game {
     private boolean isEmpty(int row, int col) {
         return board[row][col].getPiece() == PieceType.NONE;
     }
+    /**
+     * Hämtar brädets aktuella tillstånd och bygger en sträng enligt FEN-notation,
+     * vilket krävs för att den externa schackmotorn ska förstå spelet.
+     * * @author Ali Sojod
+     */
 
     public String getFEN() {
         StringBuilder fen = new StringBuilder();
 
         // 1. Läs av brädet (Från rad 7 ner till rad 0)
-        // OBS: I traditionellt schack är rad 8 högst upp. Din kod har svart på rad 7.
         for (int row = 7; row >= 0; row--) {
             int emptySquares = 0;
             for (int col = 7; col >= 0; col--) {
@@ -1143,8 +1167,6 @@ public class Chess implements Game {
         // 2. Lägg till vems tur det är
         fen.append(currentPlayer == Player.WHITE ? " w " : " b ");
 
-        // 3. Lägg till rockad-möjligheter (Vi lägger in default "KQkq" för tillfället)
-        // Om du inte har kodat rockad i din spelmotor än, låt denna vara "KQkq" eller "-"
         String rockadMöjligt = "";
 
         if (board[0][3].getPiece() == PieceType.KUNG && !board[0][3].getisMoved()) {
@@ -1176,10 +1198,8 @@ public class Chess implements Game {
 
         fen.append(rockadMöjligt).append(" ");
 
-        // 4. En Passant (Vi ignorerar detta just nu och sätter "-")
         fen.append("- ");
 
-        // 5. Halvdragsklocka och fullt dragnummer (Vi hårdkodar 0 1 för tillfället)
         fen.append("0 1");
 
         return fen.toString();
@@ -1204,7 +1224,10 @@ public class Chess implements Game {
                 return '?';
         }
     }
-
+    /**
+     * Ansvarar för att aktivera Stockfish-AI:n och ställa in svårighetsgrad.
+     * * @author Ali Sojod
+     */
     public void setAI(boolean isAI) {
         this.AIgame = isAI;
         if (isAI) {
@@ -1227,6 +1250,11 @@ public class Chess implements Game {
         }
         System.out.println("Spelets svårighetsgrad har uppdaterats till: " + this.difficultyLevel);
     }
+    /**
+     * Slår en tärning för att avgöra om datorn ska göra ett smart Stockfish-drag
+     * eller ett enklare nybörjardrag (Hybrid-AI). Utför sedan draget i en separat tråd.
+     * * @author Ali Sojod
+     */
     private void doComputerMove() {
         if (difficultyLevel.equals("easy")){
             doBeginnerMove();
@@ -1321,7 +1349,11 @@ public class Chess implements Game {
 
         return endRow == enPassantRow && endCol == enPassantCol;
     }
-
+    /**
+     * Utför regelverket för "En Passant", ett specialdrag där en bonde slår en annan
+     * bonde som precis tagit ett dubbelsteg.
+     * * @author Gabriel Bladh
+     */
     private void executeEnPassant(int toRow, int toCol) {
         int capturedPawnRow =
                 currentPlayer == Player.WHITE ? toRow - 1 : toRow + 1;
