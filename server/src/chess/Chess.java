@@ -1,5 +1,10 @@
 package chess;
 import Game.Game;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 /**
  * Huvudklassen för Schackspelet. Hanterar spelregler, brädets uppdateringar,
  * och synkronisering mellan den fysiska spelaren och AI-motorn.
@@ -7,6 +12,7 @@ import Game.Game;
  */
 
 public class Chess implements Game {
+    private PieceType aiPromotionPiece = PieceType.NONE;
     private Player aiColor = Player.BLACK;
     private String difficultyLevel = "easy";
     private boolean AIgame = false;
@@ -324,21 +330,22 @@ public class Chess implements Game {
             }
         }
 
-        board[row][col] = movingPiece;
+        board[row][col] = board[selectedRow][selectedCol];
         board[fromRow][fromCol] = emptySpace;
-        if (movingPiece.getPiece() == PieceType.BONDE &&
-                (row == 0 || row == 7))
-        {
-            promotionMode = true;
-            promotionRow = row;
-            promotionCol = col;
+        if (board[row][col].getPiece() == PieceType.BONDE && (row == 0 || row == 7)) {
 
-            clearValidMoves();
-            markChangeBondeValid();
-        } else {
-            clearValidMoves();
+            if (isAITurn()) {
+                PieceType promoType = (aiPromotionPiece != PieceType.NONE) ? aiPromotionPiece : PieceType.DROTTNING;
+                board[row][col] = new Piece(aiColor, promoType);
+                aiPromotionPiece = PieceType.NONE;
+                System.out.println("🤖 AI uppgraderade sin bonde till en " + promoType);
+            } else {
+                promotionMode = true;
+                promotionRow = row;
+                promotionCol = col;
+                markChangeBondeValid();
+            }
         }
-
         clearEnPassant();
         registerEnPassant(fromRow, fromCol, row, col);
 
@@ -350,57 +357,112 @@ public class Chess implements Game {
      * Letar igenom brädet och prioriterar att slå en pjäs, annars drar den slumpmässigt.
      * * @author Ali Sojod
      */
-    private void doBeginnerMove(){
-      new  Thread(() ->{
-          try{
-              Thread.sleep(1500);
-              java.util.List<int[]> possibleMoves = new java.util.ArrayList<>();
-              java.util.List<int[]> captureMoves = new java.util.ArrayList<>();
-              for (int r = 0; r < 8; r++){
-                  for (int c = 0; c < 8; c++){
-                      if (board[r][c].getOwner() == aiColor){
-                          clearValidMoves();
-                          checkMoves(r, c);
-                          for (int tr = 0; tr < 8; tr++){
-                              for (int tc = 0; tc < 8; tc++){
-                                if ("G".equals((validMove[tr][tc]))){
-                                    possibleMoves.add(new int[]{r, c, tr, tc});
-                                }
-                                else if ("R".equals(validMove[tr][tc])){
-                                    captureMoves.add(new int[]{r, c,tr, tc});
-                                }
-                              }
-                          }
-                      }
-                  }
-              }
-              clearValidMoves();
-              if(possibleMoves.isEmpty() && captureMoves.isEmpty()){
-                  setIsGameEnded();
-                  return;
-              }
-              int [] selectedMove;
-              java.util.Random rand = new java.util.Random();
-
-              if(!captureMoves.isEmpty()){
-                  //egen ai tar motstånds pjäs
-                  selectedMove = captureMoves.get(rand.nextInt(captureMoves.size()));
-              } else{
-                  //flyttar slumpm'ssig drag
-                  selectedMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
-              }
-              aiPendingFromRow = selectedMove[0];
-              aiPendingFromCol = selectedMove[1];
-              aiPendingToRow = selectedMove [2];
-              aiPendingToCol = selectedMove[3];
-              validMove[aiPendingFromRow][aiPendingFromCol] = "B";
-              validMove[aiPendingToRow][aiPendingToCol] = "R";
-          } catch (Exception e){
-                System.out.println("Fel i nybörjare-AI " + e.getMessage());
-            }
-    }).start();
-    }
     /**
+     * Vår egenutvecklade AI för Easy och Joakim-läget.
+     * @author Ali Sojod
+     */
+    private void doBeginnerMove() {
+        new Thread(() -> {
+            try {
+                // Tvingar AI:n att "tänka" för att skapa en realistisk fördröjning
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                System.out.println("AI blev avbruten.");
+            }
+
+            // SÄKERHETSSPÄRR: Kolla att det fortfarande är AI:ns tur
+            if (!isAITurn() || isGameEnded) {
+                return;
+            }
+
+            List<int[]> possibleMoves = new ArrayList<>();
+            List<int[]> captureMoves = new ArrayList<>();
+
+            // 1. Skanna hela brädet efter AI:ns egna pjäser
+            for (int r = 0; r < 8; r++) {
+                for (int c = 0; c < 8; c++) {
+                    if (board[r][c].getOwner() == aiColor) {
+
+                        // 2. Kolla alla drag för denna pjäs
+                        clearValidMoves();
+                        checkMoves(r, c);
+
+                        // 3. Dela upp dragen i vanliga drag (G) och attack-drag (R)
+                        for (int tr = 0; tr < 8; tr++) {
+                            for (int tc = 0; tc < 8; tc++) {
+                                if ("G".equals(validMove[tr][tc])) {
+                                    possibleMoves.add(new int[]{r, c, tr, tc});
+                                } else if ("R".equals(validMove[tr][tc])) {
+                                    captureMoves.add(new int[]{r, c, tr, tc});
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Rensa brädet från sökningen
+            clearValidMoves();
+
+            // Om AI:n är schackmatt eller instängd
+            if (possibleMoves.isEmpty() && captureMoves.isEmpty()) {
+                System.out.println("AI hittar inga drag. Människan vinner!");
+                isGameEnded = true;
+                return;
+            }
+
+            // 4. BESLUTSFASEN (Joakim vs Easy)
+            int[] chosenMove = null;
+            Random rand = new Random();
+
+            if (difficultyLevel.equals("joakim")) {
+                // JOAKIM MODE: Tar bara pjäser om han är absolut tvungen
+                if (!possibleMoves.isEmpty()) {
+                    chosenMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+                } else {
+                    chosenMove = captureMoves.get(rand.nextInt(captureMoves.size()));
+                }
+
+            } else {
+                // EASY MODE: 60% chans att anfalla, 40% chans att ta det lugnt
+                int attackChance = rand.nextInt(100);
+
+                if (!captureMoves.isEmpty() && attackChance < 60) {
+                    System.out.println("Easy AI väljer att attackera!");
+                    chosenMove = captureMoves.get(rand.nextInt(captureMoves.size()));
+                } else if (!possibleMoves.isEmpty()) {
+                    System.out.println("Easy AI tar det lugnt och gör ett vanligt drag.");
+                    chosenMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+                } else {
+                    chosenMove = captureMoves.get(rand.nextInt(captureMoves.size()));
+                }
+            }
+
+            // 5. SPARA OCH VERKSTÄLL DRAGET FÖR LED-BRÄDET
+            if (chosenMove != null) {
+                aiPendingFromRow = chosenMove[0];
+                aiPendingFromCol = chosenMove[1];
+                aiPendingToRow = chosenMove[2];
+                aiPendingToCol = chosenMove[3];
+                if (board[aiPendingFromRow][aiPendingFromCol].getPiece() == PieceType.BONDE) {
+                    if (aiPendingToRow == 0 || aiPendingToRow == 7) {
+                        aiPromotionPiece = PieceType.DROTTNING;
+                    }
+                } else {
+                    aiPromotionPiece = PieceType.NONE;
+                }
+
+                // Färgkoder för LED-listerna (B = Blå start, R = Röd mål)
+                validMove[aiPendingFromRow][aiPendingFromCol] = "B";
+                validMove[aiPendingToRow][aiPendingToCol] = "R";
+
+                System.out.println("AI (" + difficultyLevel + ") förbereder drag från " +
+                        aiPendingFromRow + ":" + aiPendingFromCol + " till " +
+                        aiPendingToRow + ":" + aiPendingToCol);
+            }
+
+        }).start();
+    }    /**
      * Beräknar var en pjäs får gå enligt schackreglerna.
      * * @author Gabriel Bladh
      */
@@ -1281,8 +1343,15 @@ public class Chess implements Game {
 
                 String bestMove = engine.getBestMove(fen);
                 System.out.println("Stockfish säger: " + bestMove);
-
-                // --- SPÄRR FÖR SCHACKMATT MÅSTE VARA MED HÄR ---
+                if (bestMove != null && bestMove.length() == 5) {
+                    char promo = bestMove.charAt(4);
+                    if (promo == 'q') aiPromotionPiece = PieceType.DROTTNING;
+                    else if (promo == 'r') aiPromotionPiece = PieceType.TORN;
+                    else if (promo == 'b') aiPromotionPiece = PieceType.LÖPARE;
+                    else if (promo == 'n') aiPromotionPiece = PieceType.HÄST;
+                } else {
+                    aiPromotionPiece = PieceType.NONE;
+                }
                 if (bestMove == null || bestMove.equals("(none)") || bestMove.equals("Inget drag hittades")) {
                     System.out.println("🏆 SCHACKMATT! Stockfish har inga drag.");
                     setIsGameEnded();
