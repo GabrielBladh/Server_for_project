@@ -1,5 +1,9 @@
 package chess;
-
+/**
+ * Representerar en enskild schackpjäs med dess typ och färg (ägare).
+ * Håller även koll på om pjäsen har flyttats tidigare, vilket är viktigt för specialdrag.
+ * * @author Gabriel Bladh
+ */
 public class Piece
 {
     Player owner;
