@@ -110,6 +110,7 @@ public class ClientHandler implements Runnable {
                         continue;
                     }
                     String response = controller.getGame().getGameEnd();
+                    System.out.println(response);
                     out.println(response);
                     out.flush();
 
