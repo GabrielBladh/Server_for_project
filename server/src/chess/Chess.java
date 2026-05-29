@@ -287,6 +287,11 @@ public class Chess implements Game {
                 return true;
             }
             if (validMove[row][col] == null) {
+                if (selectedRow != -1) {
+                    clearValidMoves();
+                    selectedRow = -1;
+                    selectedCol = -1;
+                }
                 return false;
             }
 
@@ -351,6 +356,7 @@ public class Chess implements Game {
 
         selectedRow = -1;
         selectedCol = -1;
+        clearValidMoves();
     }
     /**
      * Vår egenutvecklade "Greedy Random"-AI för Easy-läget.

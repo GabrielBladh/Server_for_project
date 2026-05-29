@@ -292,7 +292,7 @@ public class GameModel implements Game {
                 else if (p instanceof MysteryPiece) {
                     MysteryPiece mp = (MysteryPiece) p;
                     if (mp.isActivated()) {
-                        status.append("N");
+                        status.append("A");
                     } else {
                         status.append("G"); // Visas GRÖN i klienten
                     }
