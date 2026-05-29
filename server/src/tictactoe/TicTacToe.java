@@ -103,47 +103,60 @@ public class TicTacToe implements Game {
 
     private boolean movePiece(int row, int col) {
 
-        // Ingen pjäs vald ännu
         if (selectedRow == -1) {
-
-            // Måste välja sin egen pjäs
-            if (board[row][col] != null &&
-                    board[row][col].equals(currentPlayer)) {
-
+            if (board[row][col] != null && board[row][col].equals(currentPlayer)) {
                 selectedRow = row;
                 selectedCol = col;
-
-                System.out.println("Pjäs vald");
-
+                //System.out.println(currentPlayer + " markerade pjäs på: " + row + "," + col);
                 return true;
             }
-
             return false;
         }
 
-        // Flytta till tom ruta
-        if (board[row][col] == null &&
-                isAdjacent(selectedRow, selectedCol, row, col)) {
 
-            board[row][col] = currentPlayer;
-
-            board[selectedRow][selectedCol] = null;
-
+        if (row == selectedRow && col == selectedCol) {
             selectedRow = -1;
             selectedCol = -1;
-
-            checkEndGame();
-
-            if (!isGameEnded) {
-                endTurn();
-            }
-
+            //System.out.println("Pjäsen sattes ner igen (avmarkerad).");
             return true;
         }
 
+        if (board[row][col] != null && board[row][col].equals(currentPlayer)) {
+            selectedRow = row;
+            selectedCol = col;
+            //System.out.println("Bytt markering till ny pjäs på: " + row + "," + col);
+            return true;
+        }
+
+        if (board[row][col] == null) {
+
+            if (isAdjacent(selectedRow, selectedCol, row, col)) {
+
+                board[row][col] = currentPlayer; // Flytta pjäsen
+                board[selectedRow][selectedCol] = null; // Ta bort från gamla rutan
+
+                selectedRow = -1;
+                selectedCol = -1;
+
+                checkEndGame();
+
+                if (!isGameEnded) {
+                    endTurn();
+                }
+                return true;
+            } else {
+                //System.out.println("Ogiltigt drag! Rutan är för långt bort. Pjäsen avmarkeras.");
+                selectedRow = -1;
+                selectedCol = -1;
+                return false;
+            }
+        }
+
+      //  System.out.println("Klickade på motståndaren. Pjäsen avmarkeras.");
+        selectedRow = -1;
+        selectedCol = -1;
         return false;
     }
-
     private boolean isAdjacent(int fromRow, int fromCol, int toRow, int toCol) {
 
         return Math.abs(fromRow - toRow) <= 1 &&
