@@ -224,19 +224,24 @@ public class TicTacToe implements Game {
 
     @Override
     public String getGameEnd() {
+        char[] blinkStatus = new char[64];
 
-        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 64; i++) {
+            blinkStatus[i] = '0';
+        }
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
 
-                sb.append(
-                        boardBlink[row][col].equals("1") ? "1" : "0"
-                );
+                if ("1".equals(boardBlink[row][col])) {
+                    for (int button : buttons[row][col]) {
+                        blinkStatus[button] = '1';
+                    }
+                }
             }
         }
 
-        return sb.toString();
+        return new String(blinkStatus);
     }
 
     @Override
