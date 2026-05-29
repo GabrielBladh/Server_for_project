@@ -219,10 +219,7 @@ public class Chess implements Game {
     @Override
     public boolean placeTile(int row, int col)
     {
-        if (checkIfCheckMate())
-        {
-            setIsGameEnded();
-        }
+
         if (!isGameEnded) {
             if (isAITurn()) {
                 if (aiPendingFromRow != -1) { // AI väntar på att du flyttar dess pjäs
@@ -740,6 +737,10 @@ public class Chess implements Game {
 
         if (isAITurn()) {
             doComputerMove();
+        }
+        if (checkIfCheckMate())
+        {
+            setIsGameEnded();
         }
     }
 

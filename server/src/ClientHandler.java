@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import Game.Game;
+import MemoryMatrix.MemoryMetrix;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
@@ -92,7 +93,13 @@ public class ClientHandler implements Runnable {
 
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
-                }else if (command.equals("update")) {
+                }
+                else if (command.startsWith("Memory Matrix")) {
+                    controller.setGame(new MemoryMetrix());
+                    System.out.println("Memory Matrix started");
+                }
+
+                else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
