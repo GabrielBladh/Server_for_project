@@ -59,7 +59,7 @@ public class ClientHandler implements Runnable {
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
                     System.out.println("Tic Tac Toe AI started");
-                } else if (command.equals("U4")) {
+                } else if (command.equals("Kalles Spel")) {
                     controller.setGame(new GameModel()); // Startar Omvälvning!
                     System.out.println("U4 started");
                 }

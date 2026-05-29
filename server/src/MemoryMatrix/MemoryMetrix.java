@@ -11,36 +11,28 @@ public class MemoryMetrix implements Game {
     private String[][] boardBlink = new String[8][8];
     private String[][] boardLight = new String[8][8];
     private String[][] boardHidden = new String[8][8];
-    private boolean show = false;
+    private boolean show;
     private Random random = new Random();
     private ScheduledExecutorService scheduler =
             Executors.newSingleThreadScheduledExecutor();
     private int wrongAnswers;
+    private boolean endGame;
+    int placed = 8;
+    int levelPlaced = 8;
+    int level = 0;
 
 
     public MemoryMetrix() {
-        int placed = 0;
-
-        while (placed < 8) {
-            int row = random.nextInt(2,6);
-            int col = random.nextInt(2,6);
-
-            if (boardHidden[row][col] == null) {
-                boardHidden[row][col] = "X";
-                placed++;
-            }
-        }
-        show = true;
-        scheduler.schedule(() -> {
-            show = false;
-        }, 3, TimeUnit.SECONDS);
-
-
+        setup(level);
+        endGame = false;
     }
 
 
     @Override
     public String getGameStatus() {
+        if (endGame) {
+            return "RNNNNNNRNRNNNNRNNNRNNRNNNNNRRNNNNNRNNRNNNRNNNNRNRNNNNNNR";
+        }
         if (show) {
             StringBuilder boardStatus = new StringBuilder();
             for (int row = 0; row < 8; row++) {
@@ -64,10 +56,10 @@ public class MemoryMetrix implements Game {
                 if (boardLight[row][col] == null) {
                     boardStatus.append("N");
                 }
-                else if (boardHidden[row][col].equals("X")) {
+                else if (boardLight[row][col].equals("B")) {
                     boardStatus.append("B");
                 }
-                else if (boardHidden[row][col].equals("W")) {
+                else if (boardLight[row][col].equals("R")) {
                     boardStatus.append("R");
                 }
             }
@@ -75,9 +67,40 @@ public class MemoryMetrix implements Game {
         return boardStatus.toString();
     }
 
+    public void setupBlink(){
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                if (boardBlink[row][col] == null) {
+                }
+                else if (boardLight[row][col].equals("B")) {
+                    boardBlink[row][col] = "1";
+                }
+            }
+        }
+    }
+
+    public void setup(int x) {
+        show = true;
+        int placed = this.placed;
+        while (placed > 0) {
+            int row = random.nextInt(2-x/2,6+x/2);
+            int col = random.nextInt(2-x/2,6+x/2);
+
+            if (boardHidden[row][col] == null) {
+                boardHidden[row][col] = "X";
+                placed--;
+            }
+        }
+        scheduler.schedule(() -> {
+            show = false;
+        }, 3, TimeUnit.SECONDS);
+
+
+    }
+
     @Override
     public boolean placeTile(int row, int col) {
-        if (show){
+        if (show || endGame) {
             return true;
         }
         if (boardHidden[row][col] == null) {
@@ -87,10 +110,12 @@ public class MemoryMetrix implements Game {
         }
         else if (boardHidden[row][col].equals("X")) {
             boardLight[row][col] = "B";
+            placed--;
         }
-        if (wrongAnswers > 3){
+        if (wrongAnswers >= 3){
             endGame();
         }
+        checkDone();
         return true;
     }
 
@@ -99,7 +124,29 @@ public class MemoryMetrix implements Game {
         return "N";
     }
 
-    public void endGame() {}
+    public void endGame() {
+        endGame = true;
+
+    }
+
+    public void checkDone(){
+        if (placed <= 0){
+            level++;
+            placed = levelPlaced + level*3;
+            setupBlink();
+            scheduler.schedule(() -> {
+                clearBoard();
+                setup(level);
+            }, 3, TimeUnit.SECONDS);
+        }
+    }
+
+    public void clearBoard(){
+        boardBlink = new String[8][8];
+        boardLight = new String[8][8];
+        boardHidden = new String[8][8];
+    }
+
 
     @Override
     public String getGameEnd() {
