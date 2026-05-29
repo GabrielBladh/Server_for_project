@@ -2,6 +2,8 @@ package tictactoe;
 
 import Game.Game;
 
+import java.io.IOException;
+
 public class TicTacToe implements Game {
 
     String[][] board = new String[3][3];
@@ -252,6 +254,11 @@ public class TicTacToe implements Game {
     @Override
     public String getBoardStatus() {
         return "";
+    }
+
+    @Override
+    public void saveGame(Game game) throws IOException {
+
     }
 
     @Override

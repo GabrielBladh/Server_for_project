@@ -1,6 +1,8 @@
 package checkers;
 import Game.Game;
 
+import java.io.IOException;
+
 /**
  * Hanterar den centrala spellogiken för dam.
  * Håller koll på spelbrädet, spelarnas turer, giltiga drag och när spelet är slut.
@@ -52,6 +54,11 @@ public class Checkers implements Game {
      */
     public String getBoardStatus(){
         return "";
+    }
+
+    @Override
+    public void saveGame(Game game) throws IOException {
+
     }
 
     @Override

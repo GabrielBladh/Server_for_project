@@ -1,6 +1,8 @@
 package chess;
 import Game.Game;
+import Save.SaveSystem;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -155,6 +157,11 @@ public class Chess implements Game {
     }
 
     @Override
+    public void saveGame(Game game) throws IOException {
+        SaveSystem.saveGame(game);
+    }
+
+    @Override
     public void setGameStatus(String gameStatus) {
 
     }
@@ -217,8 +224,7 @@ public class Chess implements Game {
      * @author Gabriel Bladh
      */
     @Override
-    public boolean placeTile(int row, int col)
-    {
+    public boolean placeTile(int row, int col) throws IOException {
         if (!isGameEnded) {
             if (isAITurn()) {
                 if (aiPendingFromRow != -1) { // AI väntar på att du flyttar dess pjäs
@@ -291,9 +297,11 @@ public class Chess implements Game {
             {
 
                 makeMove(row, col);
-                if (!promotionMode) {
+                if (!promotionMode)
+                {
                     endTurn();
                 }
+                saveGame(this);
                 return true;
             }
             return false;

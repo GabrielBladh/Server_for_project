@@ -1,6 +1,8 @@
 package U4;
 
 import Game.Game;
+
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -309,6 +311,11 @@ public class GameModel implements Game {
             }
         }
         return status.toString();
+    }
+
+    @Override
+    public void saveGame(Game game) throws IOException {
+
     }
 
     @Override

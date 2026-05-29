@@ -1,5 +1,7 @@
 package Game;
 
+import java.io.IOException;
+
 public class defaulGame implements Game {
     @Override
     public String getGameStatus() {
@@ -29,6 +31,11 @@ public class defaulGame implements Game {
     @Override
     public String getBoardStatus() {
         return "";
+    }
+
+    @Override
+    public void saveGame(Game game) throws IOException {
+
     }
 
     @Override
