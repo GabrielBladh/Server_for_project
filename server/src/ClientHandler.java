@@ -94,6 +94,13 @@ public class ClientHandler implements Runnable {
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
                 }
+                else if (command.startsWith("Chess Quiz")) {
+                    Chess aiGame = new Chess();
+                    aiGame.setDifficultyLevel("Impossible");
+                    aiGame.setAI(true);
+                    aiGame.setBoardStatus("...");
+                    controller.setGame(aiGame);
+                }
                 else if (command.startsWith("Memory Matrix")) {
                     controller.setGame(new MemoryMetrix());
                     System.out.println("Memory Matrix started");

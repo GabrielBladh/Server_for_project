@@ -34,17 +34,12 @@ public class Chess implements Game {
     private int aiPendingFromCol = -1;
     private int aiPendingToRow = -1;
     private int aiPendingToCol = -1;
-    String[][] boardMapping = {
-            {"H1","G1","F1","E1","D1","C1","B1","A1"},
-            {"H2","G2","F2","E2","D2","C2","B2","A2"},
-            {"H3","G3","F3","E3","D3","C3","B3","A3"},
-            {"H4","G4","F4","E4","D4","C4","B4","A4"},
-            {"H5","G5","F5","E5","D5","C5","B5","A5"},
-            {"H6","G6","F6","E6","D6","C6","B6","A6"},
-            {"H7","G7","F7","E7","D7","C7","B7","A7"},
-            {"H8","G8","F8","E8","D8","C8","B8","A8"}
-    };
-
+    ArrayList<String> chessQuiz = new ArrayList<>(
+            List.of(
+                    "KNTNNNNTBBNNNdBBNNNNBNNNNNNBbNNNDNNbNNNNHbNNNNNNbkblNNbbNNNtNtNN",
+                    "NKNNNNNNBBBNNBNBNNNNNdLNNNNNNNNDNNNNNbNNNbNNNNNlblbNNNNbNkNtNNNN"
+            )
+    );
     int[][] hästMoves = {
             {2, 1}, {2, -1},
             {-2, 1}, {-2, -1},
@@ -155,12 +150,47 @@ public class Chess implements Game {
     }
 
     @Override
-    public void setGameStatus(String gameStatus) {
+    public void setBoardStatus(String gameStatu) {
+        Random random = new Random();
+        String gameStatus = chessQuiz.get(random.nextInt(chessQuiz.size()));
 
+        int index = 0;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+
+                char c = gameStatus.charAt(index);
+                index++;
+
+                if (c == 'N') {
+                    board[row][col] = emptySpace;
+                    continue;
+                }
+
+                Player owner = Character.isUpperCase(c) ? Player.WHITE : Player.BLACK;
+                System.out.println(owner);
+
+                c = Character.toLowerCase(c);
+
+                PieceType type = null;
+
+                switch (c) {
+                    case 'b' -> type = PieceType.BONDE;
+                    case 'h' -> type = PieceType.HÄST;
+                    case 'k' -> type = PieceType.KUNG;
+                    case 'd' -> type = PieceType.DROTTNING;
+                    case 't' -> type = PieceType.TORN;
+                    case 'l' -> type = PieceType.LÖPARE;
+                }
+
+                board[row][col] = new Piece(owner, type);
+                // ↑ ändra detta till din faktiska konstruktor/klass
+            }
+        }
     }
 
     @Override
-    public void setBoardStatus(String boardStatus) {
+    public void setGameStatus(String boardStatus) {
 
     }
 
