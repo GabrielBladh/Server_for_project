@@ -458,17 +458,29 @@ public class Checkers implements Game {
      * * @param winner Vinnarens sträng-ID.
      */
     private void setWinner(String winner) {
-        for (int r = 1; r <= 5; r++) {
-            blinkBoard[r][1] = "1";
-            blinkBoard[r][6] = "1";
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                blinkBoard[r][c] = "0";
+            }
         }
-        blinkBoard[6][2] = "1";
-        blinkBoard[5][3] = "1";
-        blinkBoard[5][4] = "1";
-        blinkBoard[6][5] = "1";
+
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                String piece = board[r][c];
+
+                if (piece != null) {
+                    if (winner.equals("B") && (piece.equals("B") || piece.equals("M"))) {
+                        blinkBoard[r][c] = "1";
+                    }
+                    else if (winner.equals("R") && (piece.equals("R") || piece.equals("D"))) {
+                        blinkBoard[r][c] = "1";
+                    }
+                }
+            }
+        }
+
         isGameEnded = true;
     }
-
     /**
      * Konverterar och hämtar brädets layout och vinst-effekter till en enda sträng.
      * Används typiskt av spelservern för att rita upp brädet hos klienten.
@@ -476,21 +488,20 @@ public class Checkers implements Game {
      */
     public String getGameStatus() {
         StringBuilder boardStatus = new StringBuilder();
+
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                if (isGameEnded && blinkBoard[row][col].equals("1")) {
-                    boardStatus.append("1");
-                }
-                else if (board[row][col] == null) {
+
+                if (board[row][col] == null) {
                     boardStatus.append("N");
                 } else {
                     boardStatus.append(board[row][col]);
                 }
+
             }
         }
         return boardStatus.toString();
     }
-
     /**
      * Placerar ut alla startpjäser på rätt positioner för att starta ett nytt parti.
      */
