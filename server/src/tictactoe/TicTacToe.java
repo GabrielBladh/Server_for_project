@@ -17,9 +17,9 @@ public class TicTacToe implements Game {
     private boolean aiGame = false;
 
     int[][][] buttons = {
-            { {9,10,17,18}, {11,12,19,20}, {13,14,21,22} },
-            { {25,26,33,34}, {27,28,35,36}, {29,30,37,38} },
-            { {41,42,49,50}, {43,44,51,52}, {45,46,53,54} }
+            { {0,1,8,9},       {3,4,11,12},     {6,7,14,15} },
+            { {24,25,32,33},   {27,28,35,36},   {30,31,38,39} },
+            { {48,49,56,57},   {51,52,59,60},   {54,55,62,63} }
     };
 
     public TicTacToe() {
@@ -33,18 +33,24 @@ public class TicTacToe implements Game {
 
     @Override
     public String getGameStatus() {
-
         char[] boardStatus = new char[64];
 
-        for (int i = 0; i < boardStatus.length; i++) {
-            boardStatus[i] = 'N';
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                int index = r * 8 + c;
+
+                if (r == 2 || r == 5 || c == 2 || c == 5) {
+                    boardStatus[index] = 'G'; // Rita grönt nät
+                } else {
+                    boardStatus[index] = 'N'; // Tom ruta
+                }
+            }
         }
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
 
                 if (board[row][col] != null) {
-
                     for (int button : buttons[row][col]) {
                         boardStatus[button] = board[row][col].charAt(0);
                     }
