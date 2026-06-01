@@ -403,7 +403,7 @@ public class Chess implements Game {
                 System.out.println("AI blev avbruten.");
             }
 
-            // SÄKERHETSSPÄRR: Kolla att det fortfarande är AI:ns tur
+            // SÄKERHETSSPÄRR: Kollar att det fortfarande är AI:ns tur
             if (!isAITurn() || isGameEnded) {
                 return;
             }
@@ -448,7 +448,7 @@ public class Chess implements Game {
             int[] chosenMove = null;
             Random rand = new Random();
 
-            if (difficultyLevel.equals("joakim")) {
+            if (difficultyLevel.equals("easy")) {
                 // JOAKIM MODE: Tar bara pjäser om han är absolut tvungen
                 if (!possibleMoves.isEmpty()) {
                     chosenMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
