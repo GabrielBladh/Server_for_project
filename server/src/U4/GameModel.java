@@ -258,20 +258,45 @@ public class GameModel implements Game {
     }
     @Override
     public String getGameEnd() {
-        if (!isGameEnded()) {
-            return "0";
+        char[] blinkStatus = new char[64];
+
+        for (int i = 0; i < 64; i++) {
+            blinkStatus[i] = '0';
         }
 
+        if (isGameEnded()) {
 
-        calculateScore();
+            calculateScore();
 
-        if (player1Score > player2Score) {
-            return "1"; // Spelare 1 vann
-        } else if (player2Score > player1Score) {
-            return "2"; // Spelare 2 vann
-        } else {
-            return "T"; // Tie (Oavgjort)
+            Player winner = Player.NONE;
+            if (player1Score > player2Score) {
+                winner = Player.PLAYER1;
+            } else if (player2Score > player1Score) {
+                winner = Player.PLAYER2;
+            }
+
+            int index = 0;
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    GamePiece p = board[r][c];
+
+                    if (p != null && p.getOwner() != Player.NONE) {
+
+                        // Om det blev oavgjort, blinka ALLA riktiga pjäser
+                        if (winner == Player.NONE && (p.getOwner() == Player.PLAYER1 || p.getOwner() == Player.PLAYER2)) {
+                            blinkStatus[index] = '1';
+                        }
+                        // Annars, blinka bara de pjäser som tillhör vinnaren
+                        else if (p.getOwner() == winner) {
+                            blinkStatus[index] = '1';
+                        }
+                    }
+                    index++; // Gå vidare till nästa av de 64 rutorna
+                }
+            }
         }
+
+        return new String(blinkStatus);
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import Game.Game;
+import MemoryMatrix.MemoryMetrix;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
@@ -58,7 +59,7 @@ public class ClientHandler implements Runnable {
                     aiGame.setAI(true);
                     controller.setGame(aiGame);
                     System.out.println("Tic Tac Toe AI started");
-                } else if (command.equals("U4")) {
+                } else if (command.equals("Kalles Spel")) {
                     controller.setGame(new GameModel()); // Startar Omvälvning!
                     System.out.println("U4 started");
                 }
@@ -92,7 +93,20 @@ public class ClientHandler implements Runnable {
 
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
-                }else if (command.equals("update")) {
+                }
+                else if (command.startsWith("Chess Quiz")) {
+                    Chess aiGame = new Chess();
+                    aiGame.setDifficultyLevel("Impossible");
+                    aiGame.setAI(true);
+                    aiGame.setBoardStatus("...");
+                    controller.setGame(aiGame);
+                }
+                else if (command.startsWith("Memory Matrix")) {
+                    controller.setGame(new MemoryMetrix());
+                    System.out.println("Memory Matrix started");
+                }
+
+                else if (command.equals("update")) {
                     if (controller.getGame() == null){
                         out.println("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
                         out.flush();
@@ -110,7 +124,6 @@ public class ClientHandler implements Runnable {
                         continue;
                     }
                     String response = controller.getGame().getGameEnd();
-                    System.out.println(response);
                     out.println(response);
                     out.flush();
 
