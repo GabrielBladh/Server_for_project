@@ -63,25 +63,23 @@ public class ClientHandler implements Runnable {
                     controller.setGame(new GameModel()); // Startar Omvälvning!
                     System.out.println("U4 started");
                 }
-                else if (command.equals("Chess"))
-                {
-                    controller.setGame(new Chess());
-                    System.out.println("Chess started");
+                if(command.startsWith("Chess Quiz")){
+                    Chess aiGame = new Chess();
+                    aiGame.setDifficultyLevel("Impossible");
+                    aiGame.setAI(true);
+                    aiGame.setBoardStatus("...");
+                    controller.setGame(aiGame);
+                    System.out.println("Chess Quiz started");
                 } else if (command.startsWith("Chess AI")) {
                     System.out.println(command);
                     Chess aiGame = new Chess();
-
                     String level = "easy";
 
-                    if (command.contains("Medium")) {
-                        level = "Medium";
-                    } else if (command.contains("Hard")) {
-                        level = "Hard";
-                    } else if (command.contains("Impossible")) {
-                        level = "Impossible";
-                    } else if (command.toLowerCase().contains("joakim")) { 
-                        level = "joakim";
-                    }
+                    if (command.contains("Medium")) level = "Medium";
+                    else if (command.contains("Hard")) level = "Hard";
+                    else if (command.contains("Impossible")) level = "Impossible";
+                    else if (command.toLowerCase().contains("joakim")) level = "joakim";
+
                     if (command.toLowerCase().contains("black")) {
                         aiGame.setAiColor(Player.WHITE);
                     } else {
@@ -90,18 +88,24 @@ public class ClientHandler implements Runnable {
 
                     aiGame.setDifficultyLevel(level);
                     aiGame.setAI(true);
-
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
-                }
-                else if (command.startsWith("Chess Quiz")) {
-                    Chess aiGame = new Chess();
-                    aiGame.setDifficultyLevel("Impossible");
-                    aiGame.setAI(true);
-                    aiGame.setBoardStatus("...");
-                    controller.setGame(aiGame);
-                }
-                else if (command.startsWith("Memory Matrix")) {
+                } else if (command.startsWith("Chess")) {
+                    int startTime = 300;
+
+                    if(command.contains(":")){
+                        try {
+                            String[] parts = command.split(":");
+                            startTime = Integer.parseInt(parts[1].trim());
+                        } catch(NumberFormatException e){
+                            System.out.println("Kunde inte tolka tid, använder standard 5 min");
+                        }
+                    }
+
+                    controller.setGame(new Chess(startTime));
+                    System.out.println("Chess started with " + startTime + " seconds");
+
+                } else if (command.startsWith("Memory Matrix")) {
                     controller.setGame(new MemoryMetrix());
                     System.out.println("Memory Matrix started");
                 }
@@ -174,6 +178,10 @@ public class ClientHandler implements Runnable {
                             }
                         }
 
+                        if(currentGame instanceof Chess){
+                            ((Chess) currentGame).startClock();
+                        }
+
                         currentGame.placeTile(x_värde, y_värde);
 
                         System.out.println("Button pressed: " + x_värde + ":" + y_värde);
@@ -181,7 +189,29 @@ public class ClientHandler implements Runnable {
                     } catch (NumberFormatException e) {
                         System.out.println("Kunde inte läsa siffrorna: " + command);
                     }
-                }            }
+                } else if(command.equals("pause")){
+                    Game currentGame = controller.getGame();
+                    if(currentGame instanceof Chess){
+                        ((Chess) currentGame).pauseGame();
+                    }
+                } else if (command.equals("resume")) {
+                    Game currentGame = controller.getGame();
+                    if(currentGame instanceof Chess){
+                        ((Chess) currentGame).resumeGame();
+                    }
+                } else if (command.equals("clock")) {
+                    Game currentGame = controller.getGame();
+                    if (currentGame == null || !(currentGame instanceof Chess)) {
+                        out.println("--:--|--:--");
+                        out.flush();
+                        continue;
+                    }
+
+                    String response = ((Chess) currentGame).getClockStatus();
+                    out.println(response);
+                    out.flush();
+                }
+            }
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
