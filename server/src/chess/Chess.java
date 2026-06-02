@@ -1,6 +1,7 @@
 package chess;
 import Game.Game;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -147,6 +148,11 @@ public class Chess implements Game {
             }
         }
         return boardStatus;
+    }
+
+    @Override
+    public void saveGame(Game game) throws IOException {
+
     }
 
     @Override
