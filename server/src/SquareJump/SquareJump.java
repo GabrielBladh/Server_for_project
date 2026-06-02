@@ -13,6 +13,7 @@ public class SquareJump implements Game {
     private int y = 5;
     private ScheduledExecutorService timer = Executors.newScheduledThreadPool(3);;
     private boolean moving = false;
+    private boolean ended = false;
 
 
     public SquareJump() {
@@ -78,6 +79,9 @@ public class SquareJump implements Game {
 
     @Override
     public boolean placeTile(int row, int col) {
+        if (ended){
+            return false;
+        }
         if (row == 7 && col == 6 && !moving){
             timer.schedule(() -> {
                 x--;
@@ -100,6 +104,7 @@ public class SquareJump implements Game {
 
     public void endGame(){
         timer.shutdown();
+        ended = true;
     }
 
     @Override
