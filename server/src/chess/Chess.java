@@ -1204,8 +1204,28 @@ public class Chess implements Game {
     }
 
     @Override
-    public String getGameEnd() {
-        return "";
+    public String getGameEnd()
+    {
+        String boardBlink = "";
+        if (isGameEnded)
+        {
+            for (int row = 0; row < validMove.length; row++)
+            {
+                for (int col = 0; col < validMove.length; col++)
+                {
+                    if (validMove[row][col] == "G")
+                    {
+                        boardBlink += "1";
+                    }
+                    else
+                    {
+                        boardBlink += "0";
+                    }
+                    System.out.println(boardBlink);
+                }
+            }
+        }
+        return boardBlink;
     }
 
     @Override
