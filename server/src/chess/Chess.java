@@ -41,6 +41,7 @@ public class Chess implements Game {
     private boolean clockRunning = false;
     private boolean isUntimed = false;
     private boolean isPaused = false;
+    private boolean timeEnabled = true;
 
     ArrayList<String> chessQuiz = new ArrayList<>(
             List.of(
@@ -77,8 +78,9 @@ public class Chess implements Game {
     };
 
     public Chess() {
-        StartGame();
-        startClock();
+        //StartGame();
+        //startClock();
+        this(0);
     }
 
     public Chess(int customTimeSeconds){
@@ -1549,6 +1551,7 @@ public class Chess implements Game {
             return; // Avbryt direkt, vi behöver inte skapa en ny tråd!
         }
 
+        System.out.println("Chess clock thread active: " + whiteTimeSeconds + " seconds");
         clockRunning = true;
 
         clockThread = new Thread(()->{
@@ -1587,20 +1590,14 @@ public class Chess implements Game {
 
     public String getClockStatus(){
 
-        if(isUntimed || AIgame){
-            if(isGameEnded){
-                return "GAME OVER|SCHACKMATT|--:--|--:--";
-            }
-            return "--:--|--:--";
-        }
-
         if(isGameEnded){
-
             String winnerText = "SCHACKMATT!";
-            if(whiteTimeSeconds <= 0){
-                winnerText = "ORANGE VANN!";
-            } else if (orangeTimeSeconds <= 0){
-                winnerText = "VIT VANN!";
+            if(!isUntimed){
+                if(whiteTimeSeconds <= 0){
+                    winnerText = "ORANGE VANN!";
+                } else if (orangeTimeSeconds <= 0) {
+                    winnerText = "VIT VANN";
+                }
             }
 
             int whiteMin = Math.max(0, whiteTimeSeconds) / 60;
@@ -1611,9 +1608,14 @@ public class Chess implements Game {
 
         }
 
-        if(!clockRunning){
+        if(!clockRunning || isPaused){
             return "PAUS|PAUS";
         }
+
+        if(!timeEnabled || isUntimed){
+            return "--:--|--:--";
+        }
+
         int whiteMin = whiteTimeSeconds / 60;
         int whiteSec = whiteTimeSeconds % 60;
         int orangeMin = orangeTimeSeconds / 60;
@@ -1644,15 +1646,22 @@ public class Chess implements Game {
 
     public void pauseGame(){
         this.isPaused = true;
+        this.clockRunning = false;
         System.out.println("Spelet pausat via menyn");
     }
 
     public void resumeGame(){
         this.isPaused = false;
-        if(!isGameEnded){
+        this.clockRunning = true;
+        if(!isGameEnded && !isUntimed){
             startClock();
-            System.out.println("Spelet återupptaget");
         }
+        System.out.println("Spelet återupptaget");
+
+    }
+
+    public void setTimeEnabled(boolean enabled){
+        this.timeEnabled = enabled;
     }
 
 }

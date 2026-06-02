@@ -63,7 +63,7 @@ public class ClientHandler implements Runnable {
                     controller.setGame(new GameModel()); // Startar Omvälvning!
                     System.out.println("U4 started");
                 }
-                if(command.startsWith("Chess Quiz")){
+                else if(command.startsWith("Chess Quiz")){
                     Chess aiGame = new Chess();
                     aiGame.setDifficultyLevel("Impossible");
                     aiGame.setAI(true);
@@ -91,7 +91,7 @@ public class ClientHandler implements Runnable {
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
                 } else if (command.startsWith("Chess")) {
-                    int startTime = 300;
+                    int startTime = 0;
 
                     if(command.contains(":")){
                         try {
@@ -103,7 +103,11 @@ public class ClientHandler implements Runnable {
                     }
 
                     controller.setGame(new Chess(startTime));
-                    System.out.println("Chess started with " + startTime + " seconds");
+                    if (startTime <= 0) {
+                        System.out.println("Chess started untimed (Ingen tidtagning)");
+                    } else {
+                        System.out.println("Chess started with " + startTime + " seconds");
+                    }
 
                 } else if (command.startsWith("Memory Matrix")) {
                     controller.setGame(new MemoryMetrix());
@@ -178,9 +182,10 @@ public class ClientHandler implements Runnable {
                             }
                         }
 
+                        /*
                         if(currentGame instanceof Chess){
                             ((Chess) currentGame).startClock();
-                        }
+                        }*/
 
                         currentGame.placeTile(x_värde, y_värde);
 
