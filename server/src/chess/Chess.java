@@ -172,7 +172,6 @@ public class Chess implements Game {
         return boardStatus;
     }
 
-    @Override
     public void saveGame(Game game) throws IOException {
 
     }

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 
 import Game.Game;
 import MemoryMatrix.MemoryMetrix;
+import SquareJump.SquareJump;
 import U4.GameModel;
 import checkers.Checkers;
 import chess.Chess;
@@ -108,6 +109,10 @@ public class ClientHandler implements Runnable {
                 } else if (command.startsWith("Memory Matrix")) {
                     controller.setGame(new MemoryMetrix());
                     System.out.println("Memory Matrix started");
+                }
+                else if (command.equals("Square Game")) {
+                    controller.setGame(new SquareJump());
+                    System.out.println("Square Game started");
                 }
 
                 else if (command.equals("update")) {

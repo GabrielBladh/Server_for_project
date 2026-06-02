@@ -56,7 +56,6 @@ public class Checkers implements Game {
         return "";
     }
 
-    @Override
     public void saveGame(Game game) throws IOException {
 
     }

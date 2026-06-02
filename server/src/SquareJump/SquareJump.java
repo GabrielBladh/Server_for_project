@@ -33,7 +33,7 @@ public class SquareJump implements Game {
                 endGame();
             }
 
-        }, 0, 250, TimeUnit.MILLISECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS);
     }
 
     public void World() {
@@ -84,16 +84,16 @@ public class SquareJump implements Game {
         if (row == 7 && col == 6 && !moving){
             timer.schedule(() -> {
                 x--;
-            }, 250, TimeUnit.MILLISECONDS);
-
-            timer.schedule(() -> {
-                x--;
             }, 500, TimeUnit.MILLISECONDS);
 
             timer.schedule(() -> {
                 x--;
+            }, 1000, TimeUnit.MILLISECONDS);
+
+            timer.schedule(() -> {
+                x--;
                 moving = false;
-            }, 750, TimeUnit.MILLISECONDS);
+            }, 1500, TimeUnit.MILLISECONDS);
 
             moving = true;
         }

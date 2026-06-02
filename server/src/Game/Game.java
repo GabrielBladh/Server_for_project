@@ -11,7 +11,6 @@ public interface Game {
     boolean isGameEnded();
     String getBoardStatus();
 
-    void saveGame(Game game) throws IOException;
    void setGameStatus(String gameStatus);
    void setBoardStatus(String boardStatus);
    void setTurn(String turn);
