@@ -1,8 +1,8 @@
 package U4;
 
 import Game.Game;
+import chess.Piece;
 
-import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -153,6 +153,8 @@ public class GameModel implements Game {
     private void activateMystery(MysteryPiece m, int r, int c) {
         m.setActivated(true);
         String type = m.getMysteryType();
+
+        board[r][c] = new NormalPiece(currentPlayer);
 
         switch (type) {
             case "Avgrundsvrål":
@@ -336,11 +338,6 @@ public class GameModel implements Game {
             }
         }
         return status.toString();
-    }
-
-    @Override
-    public void saveGame(Game game) throws IOException {
-
     }
 
     @Override
