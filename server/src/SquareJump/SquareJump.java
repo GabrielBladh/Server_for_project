@@ -1,10 +1,7 @@
 package SquareJump;
 import Game.Game;
 
-import U4.GamePiece;
 
-import java.lang.reflect.GenericDeclaration;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

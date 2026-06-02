@@ -1199,7 +1199,11 @@ public class Chess implements Game {
 
     @Override
     public String getTurn() {
-        return "";
+        if (currentPlayer == Player.WHITE) {
+            return "O";
+        } else {
+            return "S";
+        }
     }
 
     @Override

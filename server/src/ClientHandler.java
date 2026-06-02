@@ -150,7 +150,6 @@ public class ClientHandler implements Runnable {
                 }
                 else if (command.equals("turn")) {
                     if (controller.getGame() == null){
-                        System.out.println("R");
                         out.println("R");
                         out.flush();
                         continue;
