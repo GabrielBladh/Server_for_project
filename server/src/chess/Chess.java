@@ -34,6 +34,14 @@ public class Chess implements Game {
     private int aiPendingFromCol = -1;
     private int aiPendingToRow = -1;
     private int aiPendingToCol = -1;
+
+    private int whiteTimeSeconds = 300;
+    private int orangeTimeSeconds = 300;
+    private Thread clockThread;
+    private boolean clockRunning = false;
+    private boolean isUntimed = false;
+    private boolean isPaused = false;
+
     ArrayList<String> chessQuiz = new ArrayList<>(
             List.of(
                     "KNTNNNNTBBNNNdBBNNNNBNNNNNNBbNNNDNNbNNNNHbNNNNNNbkblNNbbNNNtNtNN",
@@ -70,6 +78,20 @@ public class Chess implements Game {
 
     public Chess() {
         StartGame();
+        startClock();
+    }
+
+    public Chess(int customTimeSeconds){
+        this.whiteTimeSeconds = customTimeSeconds;
+        this.orangeTimeSeconds = customTimeSeconds;
+
+        if(customTimeSeconds <= 0){
+            this.isUntimed = true;
+        }
+        StartGame();
+        if(!isUntimed){
+            startClock();
+        }
     }
     /**
      * Startar spelet och placerar ut alla pjäser på deras standardpositioner.
@@ -1518,6 +1540,121 @@ public class Chess implements Game {
         validMove[3][5] = "P";
         validMove[4][5] = "P";
     }
+    public void startClock(){
+        if(isUntimed || AIgame){
+            return;
+        }
+        if (clockThread != null && clockThread.isAlive()) {
+            clockRunning = true; // Säkerställ att flaggan är aktiv
+            return; // Avbryt direkt, vi behöver inte skapa en ny tråd!
+        }
+
+        clockRunning = true;
+
+        clockThread = new Thread(()->{
+            while(clockRunning && !isGameEnded){
+                try{
+                    Thread.sleep(1000);
+                    if(isPaused){
+                        continue;
+                    }
+
+                    if(!isGameEnded && !AIgame) {
+                        if (currentPlayer == Player.WHITE) {
+                            if (whiteTimeSeconds > 0) {
+                                whiteTimeSeconds--;
+                            }
+                        } else if (currentPlayer == Player.BLACK) {
+                            if (orangeTimeSeconds > 0) {
+                                orangeTimeSeconds--;
+                            }
+                        }
+
+                        if (whiteTimeSeconds <= 0 || orangeTimeSeconds <= 0) {
+                            isGameEnded = true;
+                            System.out.println("Tiden har gått ut");
+                        }
+                    }
+                } catch (InterruptedException e){
+                    System.out.println("Klocktråd avbruten: " + e.getMessage());
+                    break; // Hoppa ur loopen om tråden blir avbruten
+                }
+            }
+        });
+        clockThread.setDaemon(true);
+        clockThread.start();
+    }
+
+    public String getClockStatus(){
+
+        if(isUntimed || AIgame){
+            if(isGameEnded){
+                return "GAME OVER|SCHACKMATT|--:--|--:--";
+            }
+            return "--:--|--:--";
+        }
+
+        if(isGameEnded){
+
+            String winnerText = "SCHACKMATT!";
+            if(whiteTimeSeconds <= 0){
+                winnerText = "ORANGE VANN!";
+            } else if (orangeTimeSeconds <= 0){
+                winnerText = "VIT VANN!";
+            }
+
+            int whiteMin = Math.max(0, whiteTimeSeconds) / 60;
+            int whiteSec = Math.max(0, whiteTimeSeconds) % 60;
+            int orangeMin = Math.max(0, orangeTimeSeconds) / 60;
+            int orangeSec = Math.max(0, orangeTimeSeconds) % 60;
+            return String.format("GAME OVER|%s|%02d:%02d|%02d:%02d",winnerText, whiteMin, whiteSec, orangeMin, orangeSec);
+
+        }
+
+        if(!clockRunning){
+            return "PAUS|PAUS";
+        }
+        int whiteMin = whiteTimeSeconds / 60;
+        int whiteSec = whiteTimeSeconds % 60;
+        int orangeMin = orangeTimeSeconds / 60;
+        int orangeSec = orangeTimeSeconds % 60;
+
+        return String.format("%02d:%02d|%02d:%02d", whiteMin, whiteSec, orangeMin, orangeSec);
+    }
+
+    public void whiteButtonTriggerd(){
+        if(isGameEnded || AIgame){
+            return;
+        }
+
+        if(currentPlayer == Player.WHITE){
+            endTurn();
+        }
+    }
+
+    public void orangeButtonTriggerd(){
+        if(isGameEnded || AIgame){
+            return;
+        }
+
+        if(currentPlayer == Player.BLACK){
+            endTurn();
+        }
+    }
+
+    public void pauseGame(){
+        this.isPaused = true;
+        System.out.println("Spelet pausat via menyn");
+    }
+
+    public void resumeGame(){
+        this.isPaused = false;
+        if(!isGameEnded){
+            startClock();
+            System.out.println("Spelet återupptaget");
+        }
+    }
+
 }
 
 
