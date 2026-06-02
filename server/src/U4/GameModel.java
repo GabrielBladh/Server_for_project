@@ -1,6 +1,8 @@
 package U4;
 
 import Game.Game;
+import chess.Piece;
+
 import java.util.Random;
 
 /**
@@ -151,6 +153,8 @@ public class GameModel implements Game {
     private void activateMystery(MysteryPiece m, int r, int c) {
         m.setActivated(true);
         String type = m.getMysteryType();
+
+        board[r][c] = new NormalPiece(currentPlayer);
 
         switch (type) {
             case "Avgrundsvrål":

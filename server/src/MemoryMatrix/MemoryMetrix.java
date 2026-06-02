@@ -31,7 +31,7 @@ public class MemoryMetrix implements Game {
     @Override
     public String getGameStatus() {
         if (endGame) {
-            return "RNNNNNNRNRNNNNRNNNRNNRNNNNNRRNNNNNRNNRNNNRNNNNRNRNNNNNNR";
+            return "RNNNNNNRNRNNNNRNNNRNNRNNNNNRRNNNNNNRRNNNNNRNNRNNNRNNNNRNRNNNNNNR";
         }
         if (show) {
             StringBuilder boardStatus = new StringBuilder();
@@ -62,6 +62,9 @@ public class MemoryMetrix implements Game {
                 else if (boardLight[row][col].equals("R")) {
                     boardStatus.append("R");
                 }
+                else if (boardLight[row][col].equals("G")) {
+                    boardStatus.append("G");
+                }
             }
         }
         return boardStatus.toString();
@@ -70,10 +73,12 @@ public class MemoryMetrix implements Game {
     public void setupBlink(){
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                if (boardBlink[row][col] == null) {
+                if (boardLight[row][col] == null) {
+                    boardBlink[row][col] = "0";
                 }
                 else if (boardLight[row][col].equals("B")) {
                     boardBlink[row][col] = "1";
+                    boardLight[row][col] = "G";
                 }
             }
         }
@@ -83,8 +88,8 @@ public class MemoryMetrix implements Game {
         show = true;
         int placed = this.placed;
         while (placed > 0) {
-            int row = random.nextInt(2-x/2,6+x/2);
-            int col = random.nextInt(2-x/2,6+x/2);
+            int row = random.nextInt(2-x/4,6+(x+2)/4);
+            int col = random.nextInt(2-x/4,6+(x+2)/4);
 
             if (boardHidden[row][col] == null) {
                 boardHidden[row][col] = "X";
@@ -150,7 +155,9 @@ public class MemoryMetrix implements Game {
 
     @Override
     public String getGameEnd() {
-
+        if (endGame) {
+            return "100000010100001000100100000110000011000001001000100001010000001";
+        }
         StringBuilder boardStatus = new StringBuilder();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
