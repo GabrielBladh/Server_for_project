@@ -47,7 +47,7 @@ public class SquareJump implements Game {
                 }
             }
         }
-        for (int col = 1; col < 79; col++) {
+        for (int col = 1; col < 249; col++) {
             if (col%20 == 0 &&!(col%40==0)){
                 for (int row = col; row < 5 + col; row++) {
                     gameBoard[5][row] = "G";
