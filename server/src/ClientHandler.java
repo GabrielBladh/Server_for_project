@@ -93,6 +93,7 @@ public class ClientHandler implements Runnable {
                 } else if (command.startsWith("Chess")) {
                     int startTime = 0;
 
+
                     if(command.contains(":")){
                         try {
                             String[] parts = command.split(":");
