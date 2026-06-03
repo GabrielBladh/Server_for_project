@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable {
                     controller.setGame(aiGame);
                     System.out.println("Chess AI started with level: " + level);
                 } else if (command.startsWith("Chess")) {
-                    int startTime = 300;
+                    int startTime = 0;
 
                     if(command.contains(":")){
                         try {
